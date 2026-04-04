@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Travel App - Deploy to Vercel</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
+    }
+    .container {
+      text-align: center;
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(167, 139, 250, 0.15);
+    }
+    h1 {
+      background: linear-gradient(135deg, #a78bfa, #fca5a5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      color: #666;
+      margin: 1rem 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #a78bfa, #fca5a5);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(167, 139, 250, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Travel App</h1>
+    <p>Deploy to Vercel in one click</p>
+    
+    <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnatalyly029%2Ftravel-app&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,NEXT_PUBLIC_APP_NAME&envDescription=Supabase+Credentials&project-name=travel-app" class="button">
+      Deploy Now
+    </a>
+    
+    <p style="margin-top: 2rem; font-size: 0.875rem; color: #999;">
+      GitHub account required. You'll be guided through setup.
+    </p>
+  </div>
+</body>
+</html>
