@@ -40,6 +40,9 @@ async function handleCreateTrip(
   const shareToken = Math.random().toString(36).substring(2, 15);
 
   try {
+    // Generate unique ID for creator (since auth not implemented)
+    const creatorId = `user-${Math.random().toString(36).substring(2, 15)}`;
+
     const { data, error } = await supabase
       .from('trips')
       .insert({
@@ -49,7 +52,8 @@ async function handleCreateTrip(
         end_date,
         template,
         share_token: shareToken,
-        created_by: 'anonymous', // Will be user_id when auth is implemented
+        created_by: creatorId,
+        is_public: true, // Allow public access by default
       })
       .select()
       .single();

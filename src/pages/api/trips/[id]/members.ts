@@ -83,10 +83,14 @@ async function handleAddMember(
       }
     }
 
+    // Generate a user_id for the member (no auth yet)
+    const userId = `member-${Math.random().toString(36).substring(2, 15)}`;
+
     const { data, error } = await supabase
       .from('members')
       .insert({
         trip_id: tripId,
+        user_id: userId,
         name,
         email,
         role,
