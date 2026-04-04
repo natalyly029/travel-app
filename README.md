@@ -91,25 +91,27 @@ Choose an aesthetic direction for the app:
 
 See `skills/travel-app-ui/references/aesthetic-directions.md` for details.
 
-## Features (Planned)
+## Features Implemented
 
-### Phase 1: Core
-- [ ] Trip creation (title, dates, template selection)
-- [ ] Schedule editor (day-by-day events)
-- [ ] Member management (add, remove, roles)
-- [ ] Link sharing (generate shareable URL)
+### Phase 1: Core ✅
+- [x] Trip creation (title, dates, template selection)
+- [x] Trip detail page (overview with navigation tabs)
+- [x] Schedule editor (day-by-day events with 6 event types)
+- [x] Member management (add, remove, roles: organizer/editor/viewer)
+- [x] Link sharing (invite others via `/trips/join/:token`)
 
-### Phase 2: Expenses
-- [ ] Payment tracking (record who paid)
-- [ ] Expense allocation (specify who each cost covers)
-- [ ] Automatic settlement calculation
-- [ ] Currency conversion (JPY, USD, GBP, EUR)
+### Phase 2: Expenses ✅
+- [x] Payment tracking (record who paid)
+- [x] Payment allocation (track each expense)
+- [x] Automatic settlement calculation (greedy matching algorithm)
+- [ ] Currency conversion (JPY only, USD/GBP/EUR deferred)
 
-### Phase 3: Polish
+### Phase 3: Polish (Future)
 - [ ] PDF export with template designs
 - [ ] Real-time collaboration (WebSockets)
 - [ ] Dark mode support
 - [ ] Notifications (Discord, email)
+- [ ] Analytics dashboard
 
 ## Development Commands
 
@@ -119,6 +121,16 @@ npm run build     # Build for production
 npm run start     # Start production server
 npm run lint      # Run ESLint
 ```
+
+## Deployment
+
+Ready for production deployment on Vercel.
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed setup instructions:
+- Supabase credential configuration
+- Vercel deployment (GitHub integration or CLI)
+- Environment variables setup
+- Production verification checklist
 
 ## Environment Variables
 
