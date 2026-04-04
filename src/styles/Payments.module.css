@@ -1,0 +1,229 @@
+.container {
+  min-height: 100vh;
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 2rem;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2xl);
+  background: white;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header a {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-purple);
+}
+
+/* Summary Card */
+.summaryCard {
+  max-width: 600px;
+  margin: 0 auto var(--space-2xl);
+  padding: var(--space-2xl);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(252, 165, 165, 0.1));
+  border: 2px solid rgba(167, 139, 250, 0.2);
+  animation: fadeIn 500ms ease-out;
+}
+
+.summaryContent h3 {
+  margin-bottom: var(--space-md);
+  font-size: 1rem;
+  color: var(--color-gray-dark);
+}
+
+.totalAmount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.itemCount {
+  display: block;
+  margin-top: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+}
+
+/* Payments Section */
+.paymentsSection {
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeIn 600ms ease-out;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.sectionHeader h2 {
+  font-size: 1.5rem;
+}
+
+.errorMessage {
+  padding: var(--space-md);
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: var(--radius-md);
+  color: #991b1b;
+  margin-bottom: var(--space-lg);
+}
+
+/* Form */
+.formCard {
+  background: white;
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.formGroup label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.input,
+.select {
+  padding: var(--space-sm);
+  border: 2px solid var(--color-gray-medium);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  transition: var(--transition);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--color-purple);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.formActions button {
+  flex: 1;
+}
+
+/* Payments List */
+.empty {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--color-gray-dark);
+}
+
+.paymentsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.paymentCard {
+  padding: var(--space-lg);
+  animation: fadeIn 400ms ease-out;
+}
+
+.paymentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.paymentHeader h4 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.paymentDetails {
+  margin-bottom: var(--space-md);
+}
+
+.date,
+.description {
+  margin: var(--space-xs) 0;
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+}
+
+.deleteButton {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .totalAmount {
+    font-size: 2rem;
+  }
+}
