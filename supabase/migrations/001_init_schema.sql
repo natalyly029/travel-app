@@ -1,10 +1,8 @@
 -- Trip Planning App - Initial Schema
 
-create extension if not exists "uuid-ossp";
-
 -- Trips table
 create table if not exists trips (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
   start_date date not null,
@@ -22,7 +20,7 @@ create index idx_trips_share_token on trips(share_token);
 
 -- Members table
 create table if not exists members (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   trip_id uuid not null references trips(id) on delete cascade,
   user_id uuid,
   name text not null,
@@ -38,7 +36,7 @@ create unique index idx_members_email_per_trip on members(trip_id, email) where 
 
 -- Days (generated from trip dates, stored for performance)
 create table if not exists days (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   trip_id uuid not null references trips(id) on delete cascade,
   date date not null,
   day_number integer not null,
@@ -51,7 +49,7 @@ create unique index idx_days_trip_date on days(trip_id, date);
 
 -- Events (Schedule items)
 create table if not exists events (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   day_id uuid not null references days(id) on delete cascade,
   trip_id uuid not null references trips(id) on delete cascade,
   type text not null, -- sightseeing, food, accommodation, packing, note, payment, transport, activity
@@ -70,7 +68,7 @@ create index idx_events_created_by on events(created_by);
 
 -- Payments (Expense tracking)
 create table if not exists payments (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   trip_id uuid not null references trips(id) on delete cascade,
   payer_id uuid not null references members(id) on delete cascade,
   amount numeric(10, 2) not null,
@@ -88,7 +86,7 @@ create index idx_payments_date on payments(payment_date);
 
 -- Payment allocation (who this payment covers)
 create table if not exists payment_allocations (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   payment_id uuid not null references payments(id) on delete cascade,
   member_id uuid not null references members(id) on delete cascade,
   created_at timestamptz default now()
