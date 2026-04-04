@@ -1,0 +1,235 @@
+.container {
+  min-height: 100vh;
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 2rem;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2xl);
+  background: white;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header a {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-purple);
+}
+
+/* Share Card */
+.shareCard {
+  max-width: 600px;
+  margin: 0 auto var(--space-2xl);
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(252, 165, 165, 0.1));
+  border: 2px solid rgba(167, 139, 250, 0.2);
+  animation: fadeIn 500ms ease-out;
+}
+
+.shareCard h3 {
+  margin-bottom: var(--space-md);
+  font-size: 1.25rem;
+}
+
+.shareCard p {
+  color: var(--color-gray-dark);
+  margin-bottom: var(--space-md);
+}
+
+.shareLink {
+  display: block;
+  padding: var(--space-md);
+  background: white;
+  border: 1px solid var(--color-gray-medium);
+  border-radius: var(--radius-sm);
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  word-break: break-all;
+  margin-bottom: var(--space-md);
+}
+
+.copyButton {
+  width: 100%;
+}
+
+/* Members Section */
+.membersSection {
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeIn 600ms ease-out;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.sectionHeader h2 {
+  font-size: 1.5rem;
+}
+
+.errorMessage {
+  padding: var(--space-md);
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: var(--radius-md);
+  color: #991b1b;
+  margin-bottom: var(--space-lg);
+}
+
+/* Form */
+.formCard {
+  background: white;
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.formGroup label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.input,
+.select {
+  padding: var(--space-sm);
+  border: 2px solid var(--color-gray-medium);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  transition: var(--transition);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--color-purple);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.formActions button {
+  flex: 1;
+}
+
+/* Members List */
+.membersList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--color-gray-dark);
+}
+
+.memberCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-lg);
+  gap: var(--space-md);
+}
+
+.memberAvatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.memberInfo {
+  width: 100%;
+}
+
+.memberInfo h4 {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: 1.125rem;
+}
+
+.email {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  margin: 0;
+  word-break: break-all;
+}
+
+.role {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.deleteButton {
+  width: 100%;
+  margin-top: var(--space-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .membersList {
+    grid-template-columns: 1fr;
+  }
+}
