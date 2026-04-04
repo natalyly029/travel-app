@@ -1,0 +1,30 @@
+{
+  "name": "travel-app",
+  "version": "1.0.0",
+  "description": "Travel App - Trip Planning & Expense Splitting",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "dotenv": "^16.3.1",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.0",
+    "@types/react": "^18.2.0",
+    "eslint": "^8.45.0",
+    "typescript": "^5.1.6"
+  }
+}
