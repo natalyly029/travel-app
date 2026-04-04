@@ -1,0 +1,290 @@
+.container {
+  min-height: 100vh;
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 2rem;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2xl);
+  background: white;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header a {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-purple);
+}
+
+/* Status Card */
+.statusCard {
+  max-width: 600px;
+  margin: 0 auto var(--space-2xl);
+  padding: var(--space-2xl);
+  text-align: center;
+  animation: fadeIn 500ms ease-out;
+}
+
+.settledStatus {
+  color: #16a34a;
+}
+
+.unSettledStatus {
+  color: #ea580c;
+}
+
+.statusCard .emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: var(--space-md);
+}
+
+.statusCard h2 {
+  margin-bottom: var(--space-sm);
+  font-size: 1.75rem;
+}
+
+.statusCard p {
+  color: var(--color-gray-dark);
+}
+
+/* Settlements Section */
+.settlementsSection {
+  max-width: 800px;
+  margin: 0 auto var(--space-2xl);
+  animation: fadeIn 600ms ease-out;
+}
+
+.settlementsSection h2 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-lg);
+}
+
+.settlementsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.settlementCard {
+  padding: var(--space-lg);
+}
+
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.fromMember,
+.toMember {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.fromMember p,
+.toMember p {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.arrow {
+  font-size: 1.5rem;
+  color: var(--color-purple);
+  font-weight: bold;
+}
+
+.amount {
+  text-align: center;
+}
+
+.amountValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.actions button {
+  flex: 1;
+}
+
+/* Balances Section */
+.balancesSection {
+  max-width: 800px;
+  margin: 0 auto var(--space-2xl);
+  animation: fadeIn 700ms ease-out;
+}
+
+.balancesSection h2 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-lg);
+}
+
+.balancesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-md);
+}
+
+.balanceCard {
+  padding: var(--space-lg);
+}
+
+.balanceHeader h3 {
+  font-size: 1.125rem;
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.fairShare {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+}
+
+.balanceStatus {
+  margin-top: var(--space-md);
+}
+
+.owing {
+  color: #991b1b;
+  font-weight: 600;
+  margin: 0;
+}
+
+.owed {
+  color: #16a34a;
+  font-weight: 600;
+  margin: 0;
+}
+
+.balanced {
+  color: var(--color-gray-dark);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Summary Card */
+.summaryCard {
+  max-width: 800px;
+  margin: 0 auto var(--space-2xl);
+  padding: var(--space-lg);
+}
+
+.summaryCard h3 {
+  margin-bottom: var(--space-lg);
+  font-size: 1.25rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-lg);
+}
+
+.stat {
+  text-align: center;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  margin: 0 0 var(--space-sm) 0;
+  font-weight: 600;
+}
+
+.value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+/* Actions */
+.actions {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.actions a {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .flow {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .arrow {
+    transform: rotate(90deg);
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
