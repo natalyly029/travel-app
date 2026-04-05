@@ -346,6 +346,11 @@
   font-size: 1.25rem;
 }
 
+.detailActions {
+  display: flex;
+  gap: 8px;
+}
+
 .deleteEventButton {
   min-width: 88px;
   justify-content: center;
@@ -522,7 +527,8 @@
   }
 
   .timelineTopRow,
-  .detailHeader {
+  .detailHeader,
+  .detailActions {
     flex-direction: column;
   }
 

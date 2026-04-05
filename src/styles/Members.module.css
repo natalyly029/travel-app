@@ -12,7 +12,6 @@
   font-size: 2rem;
 }
 
-/* Header */
 .header {
   display: flex;
   align-items: center;
@@ -39,9 +38,8 @@
   color: var(--color-purple);
 }
 
-/* Share Card */
 .shareCard {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto 16px;
   padding: 16px 18px;
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(252, 165, 165, 0.1));
@@ -75,9 +73,8 @@
   width: 100%;
 }
 
-/* Members Section */
 .membersSection {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto;
   animation: fadeIn 600ms ease-out;
 }
@@ -103,7 +100,6 @@
   margin-bottom: var(--space-lg);
 }
 
-/* Form */
 .formCard {
   background: white;
   padding: var(--space-lg);
@@ -153,33 +149,60 @@
   flex: 1;
 }
 
-/* Members List */
 .membersList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.membersHeader {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: 1.2fr 1.5fr 1fr 1fr 0.8fr;
   gap: 12px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-gray-dark);
 }
 
 .empty {
-  grid-column: 1 / -1;
   text-align: center;
   padding: var(--space-2xl);
   color: var(--color-gray-dark);
 }
 
 .memberCard {
-  display: flex;
-  flex-direction: column;
+  padding: 12px;
+}
+
+.memberRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1.5fr 1fr 1fr 0.8fr;
+  gap: 12px;
   align-items: center;
-  text-align: center;
-  padding: 14px;
-  gap: 10px;
+}
+
+.memberCell {
   min-width: 0;
 }
 
+.cellLabel {
+  display: none;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-gray-dark);
+}
+
+.memberInline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .memberAvatar {
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
   color: white;
@@ -187,42 +210,40 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.2rem;
-}
-
-.memberInfo {
-  width: 100%;
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .memberInfo h4 {
-  margin: 0 0 4px 0;
-  font-size: 1rem;
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .email {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--color-gray-dark);
   margin: 0;
   word-break: break-all;
   line-height: 1.35;
 }
 
-.role {
-  display: inline-block;
-  margin-top: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-gray-light);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
+.role,
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(167, 139, 250, 0.12);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-purple);
 }
 
 .deleteButton {
   width: 100%;
-  margin-top: var(--space-md);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -247,17 +268,23 @@
     justify-content: center;
   }
 
+  .membersHeader {
+    display: none;
+  }
+
+  .memberRow,
   .formActions {
+    grid-template-columns: 1fr;
     flex-direction: column;
   }
 
-  .formActions button {
-    width: 100%;
+  .cellLabel {
+    display: block;
   }
 
-  .membersList {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
+  .formActions button,
+  .deleteButton {
+    width: 100%;
   }
 }
 
@@ -269,11 +296,7 @@
   .header,
   .formCard,
   .memberCard {
-    padding: 16px;
-  }
-
-  .shareCard {
-    margin-bottom: var(--space-lg);
+    padding: 14px;
   }
 
   .shareLink {

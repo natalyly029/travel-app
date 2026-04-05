@@ -23,6 +23,7 @@ export default function ScheduleEditor() {
   const [selectedDayId, setSelectedDayId] = useState<string>('');
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [isAddingEvent, setIsAddingEvent] = useState(false);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [formData, setFormData] = useState({
     type: 'sightseeing',
     title: '',
@@ -105,6 +106,59 @@ export default function ScheduleEditor() {
       setIsAddingEvent(false);
     } catch (err) {
       alert('イベント追加に失敗しました');
+    }
+  };
+
+  const handleStartEditEvent = (event: Event) => {
+    setIsAddingEvent(false);
+    setIsEditingEvent(true);
+    setFormData({
+      type: event.type,
+      title: event.title,
+      start_time: event.start_time || '',
+      location: event.location || '',
+      notes: event.notes || '',
+    });
+  };
+
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedEvent) {
+      alert('編集対象の予定がありません');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/trips/${id}/schedule`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: selectedEvent.id,
+          type: formData.type,
+          title: formData.title,
+          start_time: formData.start_time,
+          location: formData.location,
+          notes: formData.notes,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to update event');
+
+      setEvents((current) =>
+        current.map((event) => (event.id === selectedEvent.id ? result.data[0] : event))
+      );
+      setIsEditingEvent(false);
+      setFormData({
+        type: 'sightseeing',
+        title: '',
+        start_time: '',
+        location: '',
+        notes: '',
+      });
+    } catch (err) {
+      alert('予定の更新に失敗しました');
     }
   };
 
@@ -297,14 +351,24 @@ export default function ScheduleEditor() {
                   <p className={styles.detailEyebrow}>選択中の予定</p>
                   <h3>{selectedEvent.title}</h3>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleDeleteEvent(selectedEvent.id)}
-                  className={styles.deleteEventButton}
-                >
-                  削除
-                </Button>
+                <div className={styles.detailActions}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleStartEditEvent(selectedEvent)}
+                    className={styles.deleteEventButton}
+                  >
+                    編集
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleDeleteEvent(selectedEvent.id)}
+                    className={styles.deleteEventButton}
+                  >
+                    削除
+                  </Button>
+                </div>
               </div>
 
               <div className={styles.detailGrid}>
@@ -331,8 +395,8 @@ export default function ScheduleEditor() {
 
         {/* Add Event Form */}
         <section className={styles.addEventSection}>
-          <h3>✨ 予定を追加</h3>
-          {!isAddingEvent ? (
+          <h3>{isEditingEvent ? '🛠️ 予定を編集' : '✨ 予定を追加'}</h3>
+          {!isAddingEvent && !isEditingEvent ? (
             <Button
               variant="primary"
               onClick={() => setIsAddingEvent(true)}
@@ -342,7 +406,7 @@ export default function ScheduleEditor() {
             </Button>
           ) : (
             <Card className={styles.formCard}>
-              <form onSubmit={handleAddEvent} className={styles.form}>
+              <form onSubmit={isEditingEvent ? handleUpdateEvent : handleAddEvent} className={styles.form}>
                 <div className={styles.formGroup}>
                   <label>種類</label>
                   <div className={styles.typeSelector}>
@@ -419,12 +483,22 @@ export default function ScheduleEditor() {
 
                 <div className={styles.formActions}>
                   <Button type="submit" variant="primary">
-                    追加する
+                    {isEditingEvent ? '更新する' : '追加する'}
                   </Button>
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => setIsAddingEvent(false)}
+                    onClick={() => {
+                      setIsAddingEvent(false);
+                      setIsEditingEvent(false);
+                      setFormData({
+                        type: 'sightseeing',
+                        title: '',
+                        start_time: '',
+                        location: '',
+                        notes: '',
+                      });
+                    }}
                   >
                     キャンセル
                   </Button>

@@ -25,6 +25,10 @@ export default async function handler(
     return handleCreateEvent(id, req, res);
   }
 
+  if (req.method === 'PATCH') {
+    return handleUpdateEvent(id, req, res);
+  }
+
   if (req.method === 'DELETE') {
     return handleDeleteEvent(id, req, res);
   }
@@ -89,6 +93,44 @@ async function handleCreateEvent(
   } catch (err) {
     console.error('Create event error:', err);
     res.status(500).json({ error: 'Failed to create event' });
+  }
+}
+
+async function handleUpdateEvent(
+  tripId: string,
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
+  const { eventId, type, title, start_time, location, notes } = req.body;
+
+  if (!eventId || !type || !title) {
+    return res.status(400).json({
+      error: 'Missing required fields: eventId, type, title',
+    });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .update({
+        type,
+        title,
+        start_time,
+        location,
+        notes,
+      })
+      .eq('id', eventId)
+      .eq('trip_id', tripId)
+      .select();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(200).json({ data: data || [] });
+  } catch (err) {
+    console.error('Update event error:', err);
+    res.status(500).json({ error: 'Failed to update event' });
   }
 }
 

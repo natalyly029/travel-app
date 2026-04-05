@@ -108,6 +108,8 @@ export default function TripDetail() {
   const tripDuration = days.length > 0
     ? `${days.length}日間`
     : '読み込み中...';
+  const totalEvents = events.length;
+  const scheduledEvents = events.filter((event) => event.start_time).length;
 
   const getDayPreview = (day: Day) => {
     const dayEvents = events
@@ -178,6 +180,21 @@ export default function TripDetail() {
           🧾 清算
         </Link>
       </nav>
+
+      <section className={styles.metricsSection}>
+        <Card className={styles.metricCard}>
+          <p className={styles.metricLabel}>旅程日数</p>
+          <p className={styles.metricValue}>{days.length}</p>
+        </Card>
+        <Card className={styles.metricCard}>
+          <p className={styles.metricLabel}>予定件数</p>
+          <p className={styles.metricValue}>{totalEvents}</p>
+        </Card>
+        <Card className={styles.metricCard}>
+          <p className={styles.metricLabel}>時刻確定</p>
+          <p className={styles.metricValue}>{scheduledEvents}</p>
+        </Card>
+      </section>
 
       {/* Days Overview */}
       <section className={styles.daysSection}>

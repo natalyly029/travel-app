@@ -208,33 +208,63 @@ export default function MembersPage() {
           </Card>
         )}
 
-        {/* Members Grid */}
         <div className={styles.membersList}>
           {members.length === 0 ? (
             <p className={styles.empty}>メンバーを追加しましょう</p>
           ) : (
-            members.map((member) => (
-              <Card key={member.id} className={styles.memberCard}>
-                <div className={styles.memberAvatar}>
-                  {member.name.charAt(0).toUpperCase()}
-                </div>
-                <div className={styles.memberInfo}>
-                  <h4>{member.name}</h4>
-                  {member.email && <p className={styles.email}>{member.email}</p>}
-                  <span className={styles.role}>
-                    {member.role === 'editor' ? '✏️ 編集可能' : '👀 閲覧のみ'}
-                  </span>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleRemoveMember(member.id)}
-                  className={styles.deleteButton}
-                >
-                  削除
-                </Button>
-              </Card>
-            ))
+            <>
+              <div className={styles.membersHeader}>
+                <span>メンバー</span>
+                <span>メール</span>
+                <span>ロール</span>
+                <span>参加状況</span>
+                <span>操作</span>
+              </div>
+              {members.map((member) => (
+                <Card key={member.id} className={styles.memberCard}>
+                  <div className={styles.memberRow}>
+                    <div className={styles.memberCell}>
+                      <span className={styles.cellLabel}>メンバー</span>
+                      <div className={styles.memberInline}>
+                        <div className={styles.memberAvatar}>
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className={styles.memberInfo}>
+                          <h4>{member.name}</h4>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.memberCell}>
+                      <span className={styles.cellLabel}>メール</span>
+                      <p className={styles.email}>{member.email || '未登録'}</p>
+                    </div>
+                    <div className={styles.memberCell}>
+                      <span className={styles.cellLabel}>ロール</span>
+                      <span className={styles.role}>
+                        {member.role === 'editor' ? '✏️ 編集可能' : '👀 閲覧のみ'}
+                      </span>
+                    </div>
+                    <div className={styles.memberCell}>
+                      <span className={styles.cellLabel}>参加状況</span>
+                      <span className={styles.statusBadge}>
+                        {member.email ? '招待済み' : '名前のみ'}
+                      </span>
+                    </div>
+                    <div className={styles.memberCell}>
+                      <span className={styles.cellLabel}>操作</span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleRemoveMember(member.id)}
+                        className={styles.deleteButton}
+                      >
+                        削除
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </>
           )}
         </div>
       </section>

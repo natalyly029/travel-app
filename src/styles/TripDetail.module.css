@@ -143,6 +143,35 @@
   color: white;
 }
 
+/* Metrics */
+.metricsSection {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metricCard {
+  padding: 14px;
+}
+
+.metricLabel {
+  margin: 0 0 6px 0;
+  font-size: 0.8rem;
+  color: var(--color-gray-dark);
+  font-weight: 700;
+}
+
+.metricValue {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* Days Section */
 .daysSection {
   margin-bottom: var(--space-lg);
@@ -264,6 +293,7 @@
     font-size: 1.5rem;
   }
 
+  .metricsSection,
   .daysList {
     grid-template-columns: 1fr;
     gap: var(--space-md);
