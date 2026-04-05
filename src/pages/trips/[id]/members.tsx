@@ -186,7 +186,6 @@ export default function MembersPage() {
             <>
               <div className={styles.membersHeader}>
                 <span>メンバー</span>
-                <span>参加状況</span>
                 <span>操作</span>
               </div>
               {members.map((member) => (
@@ -202,10 +201,6 @@ export default function MembersPage() {
                           <h4>{member.name}</h4>
                         </div>
                       </div>
-                    </div>
-                    <div className={styles.memberCell}>
-                      <span className={styles.cellLabel}>参加状況</span>
-                      <span className={styles.statusBadge}>参加中</span>
                     </div>
                     <div className={styles.memberCell}>
                       <span className={styles.cellLabel}>操作</span>

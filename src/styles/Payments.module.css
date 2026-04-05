@@ -14,11 +14,12 @@
 
 /* Header */
 .header {
+  max-width: 1120px;
+  margin: 0 auto 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  margin-bottom: var(--space-lg);
   background: white;
   padding: 16px 18px;
   border-radius: var(--radius-lg);
