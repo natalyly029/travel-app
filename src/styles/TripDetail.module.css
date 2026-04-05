@@ -145,6 +145,31 @@
   color: white;
 }
 
+/* Next Event */
+.nextEventSection {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+}
+
+.nextEventCard {
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.nextEventTitle {
+  margin: 4px 0 6px;
+  font-size: 1.15rem;
+}
+
+.nextEventMeta {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-gray-dark);
+}
+
 /* Metrics */
 .metricsSection {
   max-width: 1120px;
@@ -311,6 +336,11 @@
 }
 
 @media (max-width: 768px) {
+  .nextEventCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .metricsSection {
     grid-template-columns: 1fr;
     gap: var(--space-md);

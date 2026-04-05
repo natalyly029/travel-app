@@ -38,6 +38,7 @@ export default function TripDetail() {
   const [events, setEvents] = useState<Event[]>([]);
   const [memberCount, setMemberCount] = useState(0);
   const [paymentCount, setPaymentCount] = useState(0);
+  const [nextEvent, setNextEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -57,6 +58,8 @@ export default function TripDetail() {
         setDays(result.data.days);
         setMemberCount(result.data.memberCount || 0);
         setPaymentCount(result.data.paymentCount || 0);
+        setEvents(result.data.events || []);
+        setNextEvent(result.data.nextEvent || null);
 
         saveRecentTrip({
           id: result.data.trip.id,
@@ -66,14 +69,6 @@ export default function TripDetail() {
           updatedAt: new Date().toISOString(),
         });
 
-        const scheduleResponse = await fetch(`/api/trips/${id}/schedule`);
-        const scheduleResult = await scheduleResponse.json();
-
-        if (!scheduleResponse.ok) {
-          throw new Error(scheduleResult.error || 'Failed to load schedule');
-        }
-
-        setEvents(scheduleResult.data || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
@@ -184,6 +179,24 @@ export default function TripDetail() {
           🧾 清算
         </Link>
       </nav>
+
+      {nextEvent && (
+        <section className={styles.nextEventSection}>
+          <Card className={styles.nextEventCard}>
+            <div>
+              <p className={styles.metricLabel}>次の予定</p>
+              <h3 className={styles.nextEventTitle}>{nextEvent.title}</h3>
+              <p className={styles.nextEventMeta}>
+                {nextEvent.start_time || '時間未定'}
+                {nextEvent.location ? ` ・ ${nextEvent.location}` : ''}
+              </p>
+            </div>
+            <Link href={`/trips/${trip.id}/schedule`}>
+              <Button variant="secondary">予定を見る</Button>
+            </Link>
+          </Card>
+        </section>
+      )}
 
       <section className={styles.metricsSection}>
         <Card className={styles.metricCard}>
