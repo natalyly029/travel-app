@@ -25,13 +25,13 @@ export default function SettlementPage() {
 
     const fetchSettlement = async () => {
       try {
-        const [settlementResponse, membersResponse] = await Promise.all([
+        const [settlementResponse, tripResponse] = await Promise.all([
           fetch(`/api/trips/${id}/settlement`),
-          fetch(`/api/trips/${id}/members`),
+          fetch(`/api/trips/${id}`),
         ]);
 
         const result = await settlementResponse.json();
-        const membersResult = await membersResponse.json();
+        const tripResult = await tripResponse.json();
 
         if (!settlementResponse.ok) {
           throw new Error(result.error || 'Failed to calculate settlement');
@@ -40,7 +40,7 @@ export default function SettlementPage() {
         setSettlements(result.data.settlements || []);
         setMemberBalances(result.data.memberBalances || {});
         setTotalAmount(result.data.totalAmount || 0);
-        setMembers(membersResult.data || []);
+        setMembers(tripResult.data.members || []);
       } catch (err) {
         // Settlement calculation error - show settled state
         console.error('Settlement error:', err);

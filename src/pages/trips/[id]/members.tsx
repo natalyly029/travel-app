@@ -22,15 +22,10 @@ export default function MembersPage() {
 
     const fetchData = async () => {
       try {
-        // Fetch trip
         const tripRes = await fetch(`/api/trips/${id}`);
         const tripData = await tripRes.json();
         setTrip(tripData.data.trip);
-
-        // Fetch members
-        const membersRes = await fetch(`/api/trips/${id}/members`);
-        const membersData = await membersRes.json();
-        setMembers(membersData.data || []);
+        setMembers(tripData.data.members || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
@@ -63,7 +58,7 @@ export default function MembersPage() {
         throw new Error(result.error || 'Failed to add member');
       }
 
-      setMembers([...members, ...result.data]);
+      setMembers((current) => [...current, ...result.data]);
       setFormData({ name: '' });
       setIsAddingMember(false);
     } catch (err) {
@@ -83,7 +78,7 @@ export default function MembersPage() {
 
       if (!response.ok) throw new Error('Failed to remove member');
 
-      setMembers(members.filter((m) => m.id !== memberId));
+      setMembers((current) => current.filter((m) => m.id !== memberId));
     } catch (err) {
       alert('メンバーの削除に失敗しました');
     }

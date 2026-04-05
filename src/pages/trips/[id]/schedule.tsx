@@ -50,10 +50,14 @@ export default function ScheduleEditor() {
           setSelectedDayId(matchedDay ? matchedDay.id : tripData.data.days[0].id);
         }
 
-        // Fetch events
-        const eventsRes = await fetch(`/api/trips/${id}/schedule`);
-        const eventsData = await eventsRes.json();
-        setEvents(eventsData.data || []);
+        const initialDayId = tripData.data.days.find((day: Day) => day.id === requestedDayId)?.id || tripData.data.days[0]?.id;
+        if (initialDayId) {
+          const eventsRes = await fetch(`/api/trips/${id}/schedule?dayId=${initialDayId}`);
+          const eventsData = await eventsRes.json();
+          setEvents(eventsData.data || []);
+        } else {
+          setEvents([]);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -63,6 +67,23 @@ export default function ScheduleEditor() {
 
     fetchData();
   }, [id, router.query.dayId]);
+
+  useEffect(() => {
+    if (!id || !selectedDayId) return;
+
+    const fetchDayEvents = async () => {
+      try {
+        const response = await fetch(`/api/trips/${id}/schedule?dayId=${selectedDayId}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Failed to fetch day events');
+        setEvents(result.data || []);
+      } catch (err) {
+        console.error('Error fetching day events:', err);
+      }
+    };
+
+    fetchDayEvents();
+  }, [id, selectedDayId]);
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +110,7 @@ export default function ScheduleEditor() {
       if (!response.ok) throw new Error('Failed to add event');
 
       const result = await response.json();
-      const nextEvents = [...events, ...result.data];
-      setEvents(nextEvents);
+      setEvents((current) => [...current, ...result.data]);
       if (result.data?.[0]?.id) {
         setSelectedEventId(result.data[0].id);
       }
@@ -178,8 +198,7 @@ export default function ScheduleEditor() {
         throw new Error(result.error || 'Failed to delete event');
       }
 
-      const remainingEvents = events.filter((event) => event.id !== eventId);
-      setEvents(remainingEvents);
+      setEvents((current) => current.filter((event) => event.id !== eventId));
       setSelectedEventId((current) => (current === eventId ? '' : current));
     } catch (err) {
       alert('予定の削除に失敗しました');
@@ -196,9 +215,7 @@ export default function ScheduleEditor() {
 
   const selectedDay = days.find((d) => d.id === selectedDayId);
   const dayEvents = selectedDay
-    ? events
-        .filter((e) => e.day_id === selectedDay.id)
-        .sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'))
+    ? [...events].sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'))
     : [];
   const selectedEvent = dayEvents.find((event) => event.id === selectedEventId) || dayEvents[0] || null;
   const timedEventsCount = dayEvents.filter((event) => event.start_time).length;

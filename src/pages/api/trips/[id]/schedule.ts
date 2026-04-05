@@ -11,14 +11,14 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const { id } = req.query;
+  const { id, dayId } = req.query;
 
   if (!id || typeof id !== 'string') {
     return res.status(400).json({ error: 'Invalid trip ID' });
   }
 
   if (req.method === 'GET') {
-    return handleGetEvents(id, res);
+    return handleGetEvents(id, typeof dayId === 'string' ? dayId : undefined, res);
   }
 
   if (req.method === 'POST') {
@@ -38,14 +38,21 @@ export default async function handler(
 
 async function handleGetEvents(
   tripId: string,
+  dayId: string | undefined,
   res: NextApiResponse<ResponseData>
 ) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('events')
       .select('*')
       .eq('trip_id', tripId)
       .order('start_time', { ascending: true });
+
+    if (dayId) {
+      query = query.eq('day_id', dayId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return res.status(500).json({ error: error.message });

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase';
-import { Trip, Day, Event } from '@/types';
+import { Trip, Day, Event, Member } from '@/types';
 
 type ResponseData = {
   data?: {
@@ -11,6 +11,7 @@ type ResponseData = {
     settlementCount?: number;
     events?: Event[];
     nextEvent?: Event | null;
+    members?: Member[];
   };
   error?: string;
 };
@@ -69,13 +70,13 @@ async function handleGetTrip(
       days = await createDaysForTrip(tripId, trip.start_date, trip.end_date);
     }
 
-    const [membersCountResult, paymentsCountResult, eventsResult] = await Promise.all([
-      supabase.from('members').select('*', { count: 'exact', head: true }).eq('trip_id', tripId),
+    const [membersResult, paymentsCountResult, eventsResult] = await Promise.all([
+      supabase.from('members').select('*').eq('trip_id', tripId).order('joined_at', { ascending: true }),
       supabase.from('payments').select('*', { count: 'exact', head: true }).eq('trip_id', tripId),
       supabase.from('events').select('*').eq('trip_id', tripId).order('start_time', { ascending: true }),
     ]);
 
-    const memberCount = membersCountResult.count || 0;
+    const memberCount = (membersResult.data || []).length;
     const paymentCount = paymentsCountResult.count || 0;
     const events = ((eventsResult.data || []) as Event[]).sort((a, b) => {
       const aKey = `${a.day_id}-${a.start_time || '99:99'}`;
@@ -93,6 +94,7 @@ async function handleGetTrip(
         settlementCount: 0,
         events,
         nextEvent,
+        members: (membersResult.data || []) as Member[],
       },
     });
   } catch (err) {
