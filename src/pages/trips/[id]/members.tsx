@@ -110,7 +110,7 @@ export default function MembersPage() {
       {/* Share Section */}
       <Card className={styles.shareCard}>
         <h3>🔗 友達を招待</h3>
-        <p>このリンクを友達に送って、一緒に計画できます</p>
+        <p>このリンクを友達に送って、そのまま一緒に旅を編集できます</p>
         <code className={styles.shareLink}>
           {typeof window !== 'undefined'
             ? `${window.location.origin}/trips/join/${trip?.share_token}`
@@ -201,7 +201,6 @@ export default function MembersPage() {
               <div className={styles.membersHeader}>
                 <span>メンバー</span>
                 <span>メール</span>
-                <span>権限</span>
                 <span>参加状況</span>
                 <span>操作</span>
               </div>
@@ -222,10 +221,6 @@ export default function MembersPage() {
                     <div className={styles.memberCell}>
                       <span className={styles.cellLabel}>メール</span>
                       <p className={styles.email}>{member.email || '未登録'}</p>
-                    </div>
-                    <div className={styles.memberCell}>
-                      <span className={styles.cellLabel}>権限</span>
-                      <span className={styles.role}>✏️ 全員編集可能</span>
                     </div>
                     <div className={styles.memberCell}>
                       <span className={styles.cellLabel}>参加状況</span>
