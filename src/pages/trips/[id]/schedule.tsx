@@ -191,6 +191,12 @@ export default function ScheduleEditor() {
             <p className={styles.emptyState}>予定がありません。追加しましょう！</p>
           ) : (
             <div className={styles.eventsList}>
+              <div className={styles.eventsListHeader}>
+                <span>時刻</span>
+                <span>タイトル</span>
+                <span>種類</span>
+                <span>場所 / メモ</span>
+              </div>
               {dayEvents.map((event) => {
                 const eventType = EVENT_TYPES.find((t) => t.id === event.type);
                 return (
@@ -205,21 +211,25 @@ export default function ScheduleEditor() {
                         className={styles.eventColor}
                         style={{ backgroundColor: eventType?.color }}
                       />
-                      <div className={styles.eventContent}>
-                        <div className={styles.eventTopRow}>
+                      <div className={styles.eventRow}>
+                        <div className={styles.eventTimeCol}>
+                          <span className={styles.cellLabel}>時刻</span>
+                          <p className={styles.time}>{event.start_time || '—'}</p>
+                        </div>
+                        <div className={styles.eventTitleCol}>
+                          <span className={styles.cellLabel}>タイトル</span>
                           <h4>{event.title}</h4>
+                        </div>
+                        <div className={styles.eventTypeCol}>
+                          <span className={styles.cellLabel}>種類</span>
                           <span className={styles.eventTypeBadge}>{eventType?.label || '予定'}</span>
                         </div>
-                        {event.start_time && (
-                          <p className={styles.time}>⏰ {event.start_time}</p>
-                        )}
-                        {event.location && (
-                          <p className={styles.location}>📍 {event.location}</p>
-                        )}
-                        {event.notes && <p className={styles.notes}>{event.notes}</p>}
-                        {!event.notes && !event.location && !event.start_time && (
-                          <p className={styles.notes}>詳細未設定</p>
-                        )}
+                        <div className={styles.eventMetaCol}>
+                          <span className={styles.cellLabel}>場所 / メモ</span>
+                          {event.location && <p className={styles.location}>📍 {event.location}</p>}
+                          {event.notes && <p className={styles.notes}>{event.notes}</p>}
+                          {!event.notes && !event.location && <p className={styles.notes}>詳細未設定</p>}
+                        </div>
                       </div>
                     </Card>
                   </button>

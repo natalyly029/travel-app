@@ -444,54 +444,74 @@ export default function PaymentsPage() {
           <p className={styles.empty}>支払い記録がありません</p>
         ) : (
           <div className={styles.paymentsList}>
+            <div className={styles.paymentsListHeader}>
+              <span>支払者</span>
+              <span>日付</span>
+              <span>内容</span>
+              <span>対象</span>
+              <span>金額</span>
+              <span>操作</span>
+            </div>
             {payments.map((payment) => (
               <Card key={payment.id} className={styles.paymentCard}>
-                <div className={styles.paymentHeader}>
-                  <h4>{getMemberName(payment.payer_id)}</h4>
-                  <span className={styles.amount}>
-                    ¥{(typeof payment.amount === 'number' ? payment.amount : 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className={styles.paymentDetails}>
-                  <p className={styles.date}>
-                    📅 {new Date(payment.payment_date).toLocaleDateString('ja-JP')}
-                  </p>
-                  {payment.description && (
-                    <p className={styles.description}>{payment.description}</p>
-                  )}
-                  {payment.allocated_member_ids && payment.allocated_member_ids.length > 0 && (
+                <div className={styles.paymentGrid}>
+                  <div className={styles.paymentCell}>
+                    <span className={styles.cellLabel}>支払者</span>
+                    <h4>{getMemberName(payment.payer_id)}</h4>
+                  </div>
+                  <div className={styles.paymentCell}>
+                    <span className={styles.cellLabel}>日付</span>
+                    <p className={styles.date}>{new Date(payment.payment_date).toLocaleDateString('ja-JP')}</p>
+                  </div>
+                  <div className={styles.paymentCell}>
+                    <span className={styles.cellLabel}>内容</span>
+                    <p className={styles.description}>{payment.description || '—'}</p>
+                    {payment.receipt_url && (
+                      <a
+                        href={payment.receipt_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.receiptLink}
+                      >
+                        📄 {payment.receipt_name || '領収書PDFを開く'}
+                      </a>
+                    )}
+                  </div>
+                  <div className={styles.paymentCell}>
+                    <span className={styles.cellLabel}>対象</span>
                     <p className={styles.billedMembers}>
-                      請求対象 {payment.allocated_member_ids.length}人: {payment.allocated_member_ids.map(getMemberName).join(' / ')}
+                      {payment.allocated_member_ids && payment.allocated_member_ids.length > 0
+                        ? `${payment.allocated_member_ids.length}人: ${payment.allocated_member_ids.map(getMemberName).join(' / ')}`
+                        : '—'}
                     </p>
-                  )}
-                  {payment.receipt_url && (
-                    <a
-                      href={payment.receipt_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={styles.receiptLink}
-                    >
-                      📄 {payment.receipt_name || '領収書PDFを開く'}
-                    </a>
-                  )}
-                </div>
-                <div className={styles.cardActions}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleStartEdit(payment)}
-                    className={styles.actionButton}
-                  >
-                    編集
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleDeletePayment(payment.id)}
-                    className={styles.actionButton}
-                  >
-                    削除
-                  </Button>
+                  </div>
+                  <div className={styles.paymentCell}>
+                    <span className={styles.cellLabel}>金額</span>
+                    <span className={styles.amount}>
+                      ¥{(typeof payment.amount === 'number' ? payment.amount : 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className={styles.paymentCell}>
+                    <span className={styles.cellLabel}>操作</span>
+                    <div className={styles.cardActions}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleStartEdit(payment)}
+                        className={styles.actionButton}
+                      >
+                        編集
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDeletePayment(payment.id)}
+                        className={styles.actionButton}
+                      >
+                        削除
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Card>
             ))}
