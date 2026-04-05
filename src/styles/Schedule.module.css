@@ -83,12 +83,101 @@
 
 /* Content Layout */
 .content {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.75fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(300px, 0.72fr);
   gap: 16px;
   align-items: start;
+}
+
+.timelineSection,
+.eventsSection {
+  animation: fadeIn 600ms ease-out;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 72px 24px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  text-align: left;
+}
+
+.timelineItemActive {
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18), var(--shadow-md);
+}
+
+.timelineTime {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-gray-dark);
+  padding-top: 2px;
+}
+
+.timelineLineWrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.timelineDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.timelineLine {
+  position: absolute;
+  top: 18px;
+  bottom: -14px;
+  width: 2px;
+  background: rgba(167, 139, 250, 0.2);
+}
+
+.timelineItem:last-child .timelineLine {
+  display: none;
+}
+
+.timelineContent {
+  min-width: 0;
+}
+
+.timelineTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.timelineTopRow h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.timelineMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  color: var(--color-gray-dark);
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 /* Events Section */
@@ -390,7 +479,7 @@
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .content {
     grid-template-columns: 1fr;
   }
@@ -427,6 +516,16 @@
     display: none;
   }
 
+  .timelineItem {
+    grid-template-columns: 64px 20px minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .timelineTopRow,
+  .detailHeader {
+    flex-direction: column;
+  }
+
   .eventRow,
   .detailGrid,
   .formGrid {
@@ -435,10 +534,6 @@
 
   .cellLabel {
     display: block;
-  }
-
-  .detailHeader {
-    flex-direction: column;
   }
 
   .formActions {

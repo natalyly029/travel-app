@@ -142,7 +142,9 @@ export default function ScheduleEditor() {
 
   const selectedDay = days.find((d) => d.id === selectedDayId);
   const dayEvents = selectedDay
-    ? events.filter((e) => e.day_id === selectedDay.id)
+    ? events
+        .filter((e) => e.day_id === selectedDay.id)
+        .sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'))
     : [];
   const selectedEvent = dayEvents.find((event) => event.id === selectedEventId) || dayEvents[0] || null;
   const timedEventsCount = dayEvents.filter((event) => event.start_time).length;
@@ -179,6 +181,56 @@ export default function ScheduleEditor() {
 
       {/* Schedule Content */}
       <div className={styles.content}>
+        <section className={styles.timelineSection}>
+          <div className={styles.sectionTitleRow}>
+            <h2>日内タイムライン</h2>
+            <span className={styles.sectionMeta}>
+              {timedEventsCount > 0 ? `${timedEventsCount}件が時刻指定` : '時刻未設定中心'}
+            </span>
+          </div>
+
+          {dayEvents.length === 0 ? (
+            <p className={styles.emptyState}>予定がありません。追加しましょう！</p>
+          ) : (
+            <div className={styles.timelineList}>
+              {dayEvents.map((event) => {
+                const eventType = EVENT_TYPES.find((t) => t.id === event.type);
+                const isSelected = selectedEvent?.id === event.id;
+
+                return (
+                  <button
+                    key={event.id}
+                    type="button"
+                    className={`${styles.timelineItem} ${isSelected ? styles.timelineItemActive : ''}`}
+                    onClick={() => setSelectedEventId(event.id)}
+                  >
+                    <div className={styles.timelineTime}>
+                      {event.start_time || '未定'}
+                    </div>
+                    <div className={styles.timelineLineWrap}>
+                      <span
+                        className={styles.timelineDot}
+                        style={{ backgroundColor: eventType?.color || '#a78bfa' }}
+                      />
+                      <span className={styles.timelineLine} />
+                    </div>
+                    <div className={styles.timelineContent}>
+                      <div className={styles.timelineTopRow}>
+                        <h3>{event.title}</h3>
+                        <span className={styles.eventTypeBadge}>{eventType?.label || '予定'}</span>
+                      </div>
+                      <div className={styles.timelineMeta}>
+                        <span>{event.location ? `📍 ${event.location}` : '場所未設定'}</span>
+                        <span>{event.notes ? event.notes : 'メモ未設定'}</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         {/* Events List */}
         <section className={styles.eventsSection}>
           <div className={styles.sectionTitleRow}>
