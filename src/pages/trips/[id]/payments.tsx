@@ -32,6 +32,7 @@ export default function PaymentsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState<string>('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -57,7 +58,7 @@ export default function PaymentsPage() {
             ...prev,
             payer_id: fetchedMembers[0].id,
           }));
-          setSelectedMemberIds(fetchedMembers.map((member: Member) => member.id));
+          setSelectedMemberIds([fetchedMembers[0].id]);
         }
 
         const paymentsRes = await fetch(`/api/trips/${id}/payments`);
@@ -73,12 +74,40 @@ export default function PaymentsPage() {
     fetchData();
   }, [id]);
 
+  const resetForm = () => {
+    setFormData({
+      payer_id: members[0]?.id || '',
+      amount: '',
+      description: '',
+      payment_date: new Date().toISOString().split('T')[0],
+    });
+    setReceiptFile(null);
+    setSelectedMemberIds(members[0]?.id ? [members[0].id] : []);
+    setEditingPaymentId('');
+  };
+
   const toggleMemberSelection = (memberId: string) => {
     setSelectedMemberIds((current) =>
       current.includes(memberId)
         ? current.filter((id) => id !== memberId)
         : [...current, memberId]
     );
+  };
+
+  const handlePayerChange = (payerId: string) => {
+    setFormData({ ...formData, payer_id: payerId });
+    setSelectedMemberIds((current) => {
+      if (current.includes(payerId)) return current;
+      return [...current, payerId];
+    });
+  };
+
+  const handleSelectAllMembers = () => {
+    setSelectedMemberIds(members.map((member) => member.id));
+  };
+
+  const handleClearMemberSelection = () => {
+    setSelectedMemberIds([]);
   };
 
   const handleAddPayment = async (e: React.FormEvent) => {
@@ -129,17 +158,66 @@ export default function PaymentsPage() {
       }
 
       setPayments([...result.data, ...payments]);
-      setFormData({
-        payer_id: formData.payer_id,
-        amount: '',
-        description: '',
-        payment_date: new Date().toISOString().split('T')[0],
-      });
-      setReceiptFile(null);
-      setSelectedMemberIds(members.map((member) => member.id));
+      resetForm();
       setIsAddingPayment(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add payment');
+    }
+  };
+
+  const handleStartEdit = (payment: Payment) => {
+    setIsAddingPayment(false);
+    setEditingPaymentId(payment.id);
+    setReceiptFile(null);
+    setFormData({
+      payer_id: payment.payer_id,
+      amount: String(payment.amount),
+      description: payment.description || '',
+      payment_date: payment.payment_date,
+    });
+    setSelectedMemberIds(payment.allocated_member_ids || []);
+    setError('');
+  };
+
+  const handleUpdatePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!editingPaymentId) return;
+    if (!formData.payer_id || !formData.amount) {
+      setError('必須項目を入力してください');
+      return;
+    }
+    if (selectedMemberIds.length === 0) {
+      setError('請求対象メンバーを1人以上選択してください');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/trips/${id}/payments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentId: editingPaymentId,
+          ...formData,
+          allocated_member_ids: selectedMemberIds,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update payment');
+      }
+
+      setPayments((current) =>
+        current.map((payment) =>
+          payment.id === editingPaymentId ? result.data[0] : payment
+        )
+      );
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update payment');
     }
   };
 
@@ -156,6 +234,9 @@ export default function PaymentsPage() {
       if (!response.ok) throw new Error('Failed to delete payment');
 
       setPayments(payments.filter((p) => p.id !== paymentId));
+      if (editingPaymentId === paymentId) {
+        resetForm();
+      }
     } catch (err) {
       alert('支払いの削除に失敗しました');
     }
@@ -197,10 +278,13 @@ export default function PaymentsPage() {
       <section className={styles.paymentsSection}>
         <div className={styles.sectionHeader}>
           <h2>支払い一覧</h2>
-          {!isAddingPayment && (
+          {!isAddingPayment && !editingPaymentId && (
             <Button
               variant="primary"
-              onClick={() => setIsAddingPayment(true)}
+              onClick={() => {
+                resetForm();
+                setIsAddingPayment(true);
+              }}
               size="sm"
             >
               + 追加
@@ -210,16 +294,26 @@ export default function PaymentsPage() {
 
         {error && <div className={styles.errorMessage}>{error}</div>}
 
-        {isAddingPayment && (
+        {(isAddingPayment || !!editingPaymentId) && (
           <Card className={styles.formCard}>
-            <form onSubmit={handleAddPayment} className={styles.form}>
+            <form onSubmit={editingPaymentId ? handleUpdatePayment : handleAddPayment} className={styles.form}>
+              <div className={styles.formHeaderRow}>
+                <h3>{editingPaymentId ? '支払いを編集' : '支払いを追加'}</h3>
+                <div className={styles.inlineActions}>
+                  <Button type="button" variant="secondary" size="sm" onClick={handleSelectAllMembers}>
+                    全員選択
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={handleClearMemberSelection}>
+                    全解除
+                  </Button>
+                </div>
+              </div>
+
               <div className={styles.formGroup}>
                 <label>支払者 *</label>
                 <select
                   value={formData.payer_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, payer_id: e.target.value })
-                  }
+                  onChange={(e) => handlePayerChange(e.target.value)}
                   className={styles.select}
                   required
                 >
@@ -247,7 +341,7 @@ export default function PaymentsPage() {
                   ))}
                 </div>
                 <p className={styles.fileHint}>
-                  選択したメンバーだけでこの支払いを按分します。
+                  支払者を変更すると、その人は自動で請求対象に含めます。
                 </p>
               </div>
 
@@ -301,35 +395,36 @@ export default function PaymentsPage() {
                 </div>
               </div>
 
-              <div className={styles.formGroup}>
-                <label>領収書PDF（オプション / 3MB以下）</label>
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
-                  className={styles.input}
-                />
-                <p className={styles.fileHint}>
-                  PDFのみ添付できます。無料枠運用のため3MB以下に制限しています。
-                </p>
-                {receiptFile && (
-                  <p className={styles.fileMeta}>
-                    添付予定: {receiptFile.name} ({(receiptFile.size / 1024 / 1024).toFixed(2)} MB)
+              {!editingPaymentId && (
+                <div className={styles.formGroup}>
+                  <label>領収書PDF（オプション / 3MB以下）</label>
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                    className={styles.input}
+                  />
+                  <p className={styles.fileHint}>
+                    PDFのみ添付できます。無料枠運用のため3MB以下に制限しています。
                   </p>
-                )}
-              </div>
+                  {receiptFile && (
+                    <p className={styles.fileMeta}>
+                      添付予定: {receiptFile.name} ({(receiptFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className={styles.formActions}>
                 <Button type="submit" variant="primary">
-                  追加する
+                  {editingPaymentId ? '更新する' : '追加する'}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={() => {
                     setIsAddingPayment(false);
-                    setReceiptFile(null);
-                    setSelectedMemberIds(members.map((member) => member.id));
+                    resetForm();
                   }}
                 >
                   キャンセル
@@ -374,14 +469,24 @@ export default function PaymentsPage() {
                     </a>
                   )}
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleDeletePayment(payment.id)}
-                  className={styles.deleteButton}
-                >
-                  削除
-                </Button>
+                <div className={styles.cardActions}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleStartEdit(payment)}
+                    className={styles.actionButton}
+                  >
+                    編集
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleDeletePayment(payment.id)}
+                    className={styles.actionButton}
+                  >
+                    削除
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>

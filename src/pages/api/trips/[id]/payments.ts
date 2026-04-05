@@ -28,6 +28,10 @@ export default async function handler(
     return handleCreatePayment(id, req, res);
   }
 
+  if (req.method === 'PATCH') {
+    return handleUpdatePayment(id, req, res);
+  }
+
   if (req.method === 'DELETE') {
     return handleDeletePayment(id, req, res);
   }
@@ -80,6 +84,20 @@ async function enrichPaymentsWithReceiptUrl(payments: Payment[]) {
       };
     })
   );
+}
+
+async function fetchAndEnrichPaymentsByIds(paymentIds: string[]) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .in('id', paymentIds);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const withAllocations = await attachAllocations((data || []) as Payment[]);
+  return enrichPaymentsWithReceiptUrl(withAllocations);
 }
 
 async function handleGetPayments(
@@ -152,6 +170,12 @@ async function uploadReceiptIfNeeded(
   };
 }
 
+function normalizeAllocatedMemberIds(allocated_member_ids: unknown) {
+  return Array.isArray(allocated_member_ids)
+    ? [...new Set(allocated_member_ids.filter((memberId) => typeof memberId === 'string' && memberId))]
+    : [];
+}
+
 async function handleCreatePayment(
   tripId: string,
   req: NextApiRequest,
@@ -178,9 +202,7 @@ async function handleCreatePayment(
     return res.status(400).json({ error: 'Amount must be greater than 0' });
   }
 
-  const normalizedAllocatedMemberIds = Array.isArray(allocated_member_ids)
-    ? [...new Set(allocated_member_ids.filter((memberId) => typeof memberId === 'string' && memberId))]
-    : [];
+  const normalizedAllocatedMemberIds = normalizeAllocatedMemberIds(allocated_member_ids);
 
   if (normalizedAllocatedMemberIds.length === 0) {
     return res.status(400).json({ error: 'At least one billed member must be selected' });
@@ -226,14 +248,81 @@ async function handleCreatePayment(
       return res.status(500).json({ error: allocationError.message });
     }
 
-    const withAllocations = await attachAllocations([data as Payment]);
-    const enriched = await enrichPaymentsWithReceiptUrl(withAllocations);
+    const enriched = await fetchAndEnrichPaymentsByIds([data.id]);
     res.status(201).json({ data: enriched });
   } catch (err) {
     console.error('Create payment error:', err);
     res.status(500).json({
       error: err instanceof Error ? err.message : 'Failed to create payment',
     });
+  }
+}
+
+async function handleUpdatePayment(
+  tripId: string,
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
+  const { paymentId, payer_id, amount, description, payment_date, allocated_member_ids } = req.body;
+
+  if (!paymentId) {
+    return res.status(400).json({ error: 'Missing required field: paymentId' });
+  }
+
+  const normalizedAllocatedMemberIds = normalizeAllocatedMemberIds(allocated_member_ids);
+
+  if (normalizedAllocatedMemberIds.length === 0) {
+    return res.status(400).json({ error: 'At least one billed member must be selected' });
+  }
+
+  try {
+    const updatePayload: Record<string, unknown> = {};
+
+    if (payer_id) updatePayload.payer_id = payer_id;
+    if (amount) {
+      updatePayload.amount = parseFloat(amount);
+      updatePayload.amount_jpy = parseFloat(amount);
+    }
+    if (typeof description === 'string') updatePayload.description = description;
+    if (payment_date) updatePayload.payment_date = payment_date;
+
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', paymentId)
+      .eq('trip_id', tripId);
+
+    if (paymentError) {
+      return res.status(500).json({ error: paymentError.message });
+    }
+
+    const { error: deleteAllocationsError } = await supabase
+      .from('payment_allocations')
+      .delete()
+      .eq('payment_id', paymentId);
+
+    if (deleteAllocationsError) {
+      return res.status(500).json({ error: deleteAllocationsError.message });
+    }
+
+    const allocationRows = normalizedAllocatedMemberIds.map((memberId) => ({
+      payment_id: paymentId,
+      member_id: memberId,
+    }));
+
+    const { error: insertAllocationsError } = await supabase
+      .from('payment_allocations')
+      .insert(allocationRows);
+
+    if (insertAllocationsError) {
+      return res.status(500).json({ error: insertAllocationsError.message });
+    }
+
+    const enriched = await fetchAndEnrichPaymentsByIds([paymentId]);
+    res.status(200).json({ data: enriched });
+  } catch (err) {
+    console.error('Update payment error:', err);
+    res.status(500).json({ error: 'Failed to update payment' });
   }
 }
 

@@ -107,6 +107,20 @@
   margin-bottom: var(--space-lg);
 }
 
+.formHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.inlineActions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -256,6 +270,16 @@
   word-break: break-all;
 }
 
+.cardActions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.actionButton {
+  flex: 1;
+  justify-content: center;
+}
+
 .deleteButton {
   width: 100%;
 }
@@ -290,11 +314,14 @@
     grid-template-columns: 1fr;
   }
 
-  .formActions {
+  .inlineActions,
+  .formActions,
+  .cardActions {
     flex-direction: column;
   }
 
-  .formActions button {
+  .formActions button,
+  .actionButton {
     width: 100%;
   }
 
