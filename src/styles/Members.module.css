@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  padding: var(--space-lg);
+  padding: clamp(16px, 3vw, 32px);
   background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
 }
 
@@ -17,6 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-md);
   margin-bottom: var(--space-2xl);
   background: white;
   padding: var(--space-lg);
@@ -40,9 +41,9 @@
 
 /* Share Card */
 .shareCard {
-  max-width: 600px;
+  max-width: 720px;
   margin: 0 auto var(--space-2xl);
-  padding: var(--space-lg);
+  padding: clamp(18px, 3vw, 28px);
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(252, 165, 165, 0.1));
   border: 2px solid rgba(167, 139, 250, 0.2);
   animation: fadeIn 500ms ease-out;
@@ -76,7 +77,7 @@
 
 /* Members Section */
 .membersSection {
-  max-width: 800px;
+  max-width: 960px;
   margin: 0 auto;
   animation: fadeIn 600ms ease-out;
 }
@@ -85,6 +86,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-md);
   margin-bottom: var(--space-lg);
 }
 
@@ -172,6 +174,7 @@
   text-align: center;
   padding: var(--space-lg);
   gap: var(--space-md);
+  min-width: 0;
 }
 
 .memberAvatar {
@@ -220,16 +223,59 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
   .header {
     flex-direction: column;
-    gap: var(--space-md);
+    align-items: flex-start;
   }
 
   .header h1 {
     font-size: 1.25rem;
   }
 
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sectionHeader button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .formActions button {
+    width: 100%;
+  }
+
   .membersList {
     grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+  }
+
+  .header,
+  .formCard,
+  .memberCard {
+    padding: 16px;
+  }
+
+  .shareCard {
+    margin-bottom: var(--space-lg);
+  }
+
+  .shareLink {
+    font-size: 0.8rem;
   }
 }
