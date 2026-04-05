@@ -119,6 +119,58 @@
   margin-bottom: var(--space-lg);
 }
 
+.memberSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.memberSummaryCard {
+  padding: 14px;
+}
+
+.memberSummaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.memberSummaryHeader h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.memberSummaryBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(167, 139, 250, 0.12);
+  font-size: 0.75rem;
+  color: var(--color-purple);
+  font-weight: 700;
+}
+
+.memberSummaryAmount {
+  margin: 0 0 6px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.memberSummaryMeta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-gray-dark);
+}
+
 .filterCard {
   padding: 14px;
   margin-bottom: 14px;
@@ -376,6 +428,7 @@
     display: none;
   }
 
+  .memberSummaryGrid,
   .filterGrid,
   .paymentGrid,
   .memberChecklist,

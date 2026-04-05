@@ -283,6 +283,23 @@ export default function PaymentsPage() {
     0
   );
   const receiptCount = payments.filter((payment) => payment.receipt_url).length;
+  const memberSummaries = members.map((member) => {
+    const paidPayments = payments.filter((payment) => payment.payer_id === member.id);
+    const totalPaid = paidPayments.reduce(
+      (sum, payment) => sum + (typeof payment.amount === 'number' ? payment.amount : 0),
+      0
+    );
+    const involvedCount = payments.filter((payment) =>
+      payment.allocated_member_ids?.includes(member.id)
+    ).length;
+
+    return {
+      member,
+      totalPaid,
+      paidCount: paidPayments.length,
+      involvedCount,
+    };
+  }).sort((a, b) => b.totalPaid - a.totalPaid);
 
   if (isLoading) {
     return (
@@ -328,6 +345,19 @@ export default function PaymentsPage() {
               + 追加
             </Button>
           )}
+        </div>
+
+        <div className={styles.memberSummaryGrid}>
+          {memberSummaries.map(({ member, totalPaid, paidCount, involvedCount }) => (
+            <Card key={member.id} className={styles.memberSummaryCard}>
+              <div className={styles.memberSummaryHeader}>
+                <h3>{member.name}</h3>
+                <span className={styles.memberSummaryBadge}>{paidCount}件支払い</span>
+              </div>
+              <p className={styles.memberSummaryAmount}>¥{totalPaid.toLocaleString()}</p>
+              <p className={styles.memberSummaryMeta}>請求対象に含まれた回数: {involvedCount}件</p>
+            </Card>
+          ))}
         </div>
 
         <Card className={styles.filterCard}>
