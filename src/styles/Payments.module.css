@@ -119,6 +119,17 @@
   margin-bottom: var(--space-lg);
 }
 
+.filterCard {
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
 /* Form */
 .formCard {
   background: white;
@@ -365,6 +376,7 @@
     display: none;
   }
 
+  .filterGrid,
   .paymentGrid,
   .memberChecklist,
   .formGrid {

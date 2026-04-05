@@ -35,6 +35,9 @@ export default function PaymentsPage() {
   const [editingPaymentId, setEditingPaymentId] = useState<string>('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc');
+  const [payerFilter, setPayerFilter] = useState<string>('all');
+  const [receiptFilter, setReceiptFilter] = useState<'all' | 'with-receipt' | 'without-receipt'>('all');
   const [formData, setFormData] = useState({
     payer_id: '',
     amount: '',
@@ -246,6 +249,35 @@ export default function PaymentsPage() {
     return members.find((m) => m.id === memberId)?.name || '不明';
   };
 
+  const filteredPayments = payments
+    .filter((payment) => {
+      if (payerFilter !== 'all' && payment.payer_id !== payerFilter) {
+        return false;
+      }
+
+      if (receiptFilter === 'with-receipt' && !payment.receipt_url) {
+        return false;
+      }
+
+      if (receiptFilter === 'without-receipt' && payment.receipt_url) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'date-desc') {
+        return b.payment_date.localeCompare(a.payment_date);
+      }
+      if (sortOrder === 'date-asc') {
+        return a.payment_date.localeCompare(b.payment_date);
+      }
+      if (sortOrder === 'amount-desc') {
+        return (b.amount || 0) - (a.amount || 0);
+      }
+      return (a.amount || 0) - (b.amount || 0);
+    });
+
   const totalAmount = payments.reduce(
     (sum, p) => sum + (typeof p.amount === 'number' ? p.amount : 0),
     0
@@ -297,6 +329,53 @@ export default function PaymentsPage() {
             </Button>
           )}
         </div>
+
+        <Card className={styles.filterCard}>
+          <div className={styles.filterGrid}>
+            <div className={styles.formGroup}>
+              <label>並び順</label>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc')}
+                className={styles.select}
+              >
+                <option value="date-desc">日付が新しい順</option>
+                <option value="date-asc">日付が古い順</option>
+                <option value="amount-desc">金額が大きい順</option>
+                <option value="amount-asc">金額が小さい順</option>
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>支払者で絞り込み</label>
+              <select
+                value={payerFilter}
+                onChange={(e) => setPayerFilter(e.target.value)}
+                className={styles.select}
+              >
+                <option value="all">全員</option>
+                {members.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>PDF添付</label>
+              <select
+                value={receiptFilter}
+                onChange={(e) => setReceiptFilter(e.target.value as 'all' | 'with-receipt' | 'without-receipt')}
+                className={styles.select}
+              >
+                <option value="all">すべて</option>
+                <option value="with-receipt">PDFあり</option>
+                <option value="without-receipt">PDFなし</option>
+              </select>
+            </div>
+          </div>
+        </Card>
 
         {error && <div className={styles.errorMessage}>{error}</div>}
 
@@ -440,8 +519,8 @@ export default function PaymentsPage() {
           </Card>
         )}
 
-        {payments.length === 0 ? (
-          <p className={styles.empty}>支払い記録がありません</p>
+        {filteredPayments.length === 0 ? (
+          <p className={styles.empty}>条件に一致する支払い記録がありません</p>
         ) : (
           <div className={styles.paymentsList}>
             <div className={styles.paymentsListHeader}>
@@ -452,7 +531,7 @@ export default function PaymentsPage() {
               <span>金額</span>
               <span>操作</span>
             </div>
-            {payments.map((payment) => (
+            {filteredPayments.map((payment) => (
               <Card key={payment.id} className={styles.paymentCard}>
                 <div className={styles.paymentGrid}>
                   <div className={styles.paymentCell}>
