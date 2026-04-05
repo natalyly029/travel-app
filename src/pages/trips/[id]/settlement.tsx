@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button, Card } from '@/components';
-import { Settlement } from '@/types';
+import { Settlement, Member } from '@/types';
 import styles from '@/styles/Settlement.module.css';
 
 interface MemberBalance {
@@ -15,6 +15,7 @@ export default function SettlementPage() {
   const router = useRouter();
   const { id } = router.query;
   const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [memberBalances, setMemberBalances] = useState<Record<string, MemberBalance>>({});
   const [totalAmount, setTotalAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,16 +25,22 @@ export default function SettlementPage() {
 
     const fetchSettlement = async () => {
       try {
-        const response = await fetch(`/api/trips/${id}/settlement`);
-        const result = await response.json();
+        const [settlementResponse, membersResponse] = await Promise.all([
+          fetch(`/api/trips/${id}/settlement`),
+          fetch(`/api/trips/${id}/members`),
+        ]);
 
-        if (!response.ok) {
+        const result = await settlementResponse.json();
+        const membersResult = await membersResponse.json();
+
+        if (!settlementResponse.ok) {
           throw new Error(result.error || 'Failed to calculate settlement');
         }
 
         setSettlements(result.data.settlements || []);
         setMemberBalances(result.data.memberBalances || {});
         setTotalAmount(result.data.totalAmount || 0);
+        setMembers(membersResult.data || []);
       } catch (err) {
         // Settlement calculation error - show settled state
         console.error('Settlement error:', err);
@@ -54,6 +61,8 @@ export default function SettlementPage() {
   }
 
   const isSettled = settlements.length === 0;
+  const getMemberName = (memberId: string) =>
+    members.find((member) => member.id === memberId)?.name || memberId;
 
   return (
     <div className={styles.container}>
@@ -84,48 +93,58 @@ export default function SettlementPage() {
       {/* Settlements List */}
       {!isSettled && (
         <section className={styles.settlementsSection}>
-          <h2>送金内容</h2>
+          <div className={styles.sectionTitleRow}>
+            <h2>送金内容</h2>
+            <span className={styles.sectionMeta}>{settlements.length}件</span>
+          </div>
           <div className={styles.settlementsList}>
+            <div className={styles.settlementsHeader}>
+              <span>支払う人</span>
+              <span>受け取る人</span>
+              <span>金額</span>
+              <span>操作</span>
+            </div>
             {settlements.map((settlement, idx) => (
               <Card key={idx} className={styles.settlementCard}>
-                <div className={styles.flow}>
-                  <div className={styles.fromMember}>
-                    <div className={styles.avatar}>
-                      {settlement.from_name.charAt(0).toUpperCase()}
+                <div className={styles.settlementGrid}>
+                  <div className={styles.settlementCell}>
+                    <span className={styles.cellLabel}>支払う人</span>
+                    <div className={styles.memberInline}>
+                      <div className={styles.avatar}>
+                        {settlement.from_name.charAt(0).toUpperCase()}
+                      </div>
+                      <p>{settlement.from_name}</p>
                     </div>
-                    <p>{settlement.from_name}</p>
                   </div>
-
-                  <div className={styles.arrow}>→</div>
-
-                  <div className={styles.amount}>
-                    <p className={styles.amountValue}>
-                      ¥{settlement.amount.toLocaleString()}
-                    </p>
-                  </div>
-
-                  <div className={styles.arrow}>→</div>
-
-                  <div className={styles.toMember}>
-                    <div className={styles.avatar}>
-                      {settlement.to_name.charAt(0).toUpperCase()}
+                  <div className={styles.settlementCell}>
+                    <span className={styles.cellLabel}>受け取る人</span>
+                    <div className={styles.memberInline}>
+                      <div className={styles.avatar}>
+                        {settlement.to_name.charAt(0).toUpperCase()}
+                      </div>
+                      <p>{settlement.to_name}</p>
                     </div>
-                    <p>{settlement.to_name}</p>
                   </div>
-                </div>
-
-                <div className={styles.actions}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      const text = `${settlement.from_name} → ${settlement.to_name}: ¥${settlement.amount.toLocaleString()}`;
-                      navigator.clipboard.writeText(text);
-                      alert('コピーしました');
-                    }}
-                  >
-                    📋 コピー
-                  </Button>
+                  <div className={styles.settlementCell}>
+                    <span className={styles.cellLabel}>金額</span>
+                    <p className={styles.amountValue}>¥{settlement.amount.toLocaleString()}</p>
+                  </div>
+                  <div className={styles.settlementCell}>
+                    <span className={styles.cellLabel}>操作</span>
+                    <div className={styles.rowActions}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const text = `${settlement.from_name} → ${settlement.to_name}: ¥${settlement.amount.toLocaleString()}`;
+                          navigator.clipboard.writeText(text);
+                          alert('コピーしました');
+                        }}
+                      >
+                        📋 コピー
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -135,37 +154,46 @@ export default function SettlementPage() {
 
       {/* Member Balances */}
       <section className={styles.balancesSection}>
-        <h2>各自の負担内訳</h2>
+        <div className={styles.sectionTitleRow}>
+          <h2>各自の負担内訳</h2>
+          <span className={styles.sectionMeta}>{Object.keys(memberBalances).length}人</span>
+        </div>
         <div className={styles.balancesList}>
+          <div className={styles.balancesHeader}>
+            <span>メンバー</span>
+            <span>支払額</span>
+            <span>負担額</span>
+            <span>差額</span>
+          </div>
           {Object.entries(memberBalances).map(([memberId, balance]) => {
             const isOwing = balance.balance < -0.01;
             const isOwed = balance.balance > 0.01;
 
             return (
               <Card key={memberId} className={styles.balanceCard}>
-                <div className={styles.balanceHeader}>
-                  <h3>支払額: ¥{balance.paid.toLocaleString()}</h3>
-                  <span className={styles.fairShare}>
-                    負担額: ¥{balance.fairShare.toLocaleString()}
-                  </span>
-                </div>
-
-                <div className={styles.balanceStatus}>
-                  {isOwing && (
-                    <p className={styles.owing}>
-                      ❌ ¥{Math.abs(balance.balance).toLocaleString()} 不足
-                    </p>
-                  )}
-                  {isOwed && (
-                    <p className={styles.owed}>
-                      ✅ ¥{balance.balance.toLocaleString()} 返金予定
-                    </p>
-                  )}
-                  {!isOwing && !isOwed && (
-                    <p className={styles.balanced}>
-                      ✓ 清算済み
-                    </p>
-                  )}
+                <div className={styles.balanceGrid}>
+                  <div className={styles.balanceCell}>
+                    <span className={styles.cellLabel}>メンバー</span>
+                    <p className={styles.memberName}>{getMemberName(memberId)}</p>
+                  </div>
+                  <div className={styles.balanceCell}>
+                    <span className={styles.cellLabel}>支払額</span>
+                    <p>¥{balance.paid.toLocaleString()}</p>
+                  </div>
+                  <div className={styles.balanceCell}>
+                    <span className={styles.cellLabel}>負担額</span>
+                    <p>¥{balance.fairShare.toLocaleString()}</p>
+                  </div>
+                  <div className={styles.balanceCell}>
+                    <span className={styles.cellLabel}>差額</span>
+                    {isOwing && (
+                      <p className={styles.owing}>¥{Math.abs(balance.balance).toLocaleString()} 不足</p>
+                    )}
+                    {isOwed && (
+                      <p className={styles.owed}>¥{balance.balance.toLocaleString()} 返金予定</p>
+                    )}
+                    {!isOwing && !isOwed && <p className={styles.balanced}>清算済み</p>}
+                  </div>
                 </div>
               </Card>
             );
