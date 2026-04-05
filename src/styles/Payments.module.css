@@ -42,7 +42,7 @@
 
 /* Summary Card */
 .summaryCard {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto 16px;
   padding: 16px 18px;
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(252, 165, 165, 0.1));
