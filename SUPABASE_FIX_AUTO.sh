@@ -3,10 +3,14 @@
 # Supabase RLS Fix Script
 # Usage: bash SUPABASE_FIX_AUTO.sh
 
-SUPABASE_URL="https://ssqifnxhbywabvglnppj.supabase.co"
-SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcWlmbnhoYnl3YWJ2Z2xucHBqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTMwMDI1MSwiZXhwIjoyMDkwODc2MjUxfQ.aeHPy9uLKovqkjSdLwenpJRaq-3PHz-Fc3ew5nQ50XQ"
+SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:-https://YOUR_PROJECT_REF.supabase.co}"
+SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
 
 echo "🔧 Executing Supabase RLS fix..."
+
+if [ -z "$SERVICE_ROLE_KEY" ]; then
+  echo "⚠️  SUPABASE_SERVICE_ROLE_KEY is not set in the environment."
+fi
 
 # Call Supabase SQL API (requires direct DB connection)
 # For now, provide manual instructions since Supabase free tier doesn't expose SQL execution API
