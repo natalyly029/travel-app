@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  padding: clamp(16px, 3vw, 32px);
+  padding: clamp(16px, 3vw, 28px);
   background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
 }
 
@@ -33,13 +33,14 @@
 
 /* Trip Header */
 .header {
+  max-width: 1120px;
+  margin: 0 auto 16px;
   background: white;
   border-radius: var(--radius-lg);
-  padding: clamp(18px, 3vw, 32px);
-  margin-bottom: var(--space-lg);
+  padding: 18px 20px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
-  gap: clamp(16px, 3vw, 28px);
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
   box-shadow: 0 12px 32px rgba(167, 139, 250, 0.15);
   animation: fadeIn 500ms ease-out;
 }
@@ -110,9 +111,10 @@
 
 /* Tabs Navigation */
 .tabs {
+  max-width: 1120px;
+  margin: 0 auto 16px;
   display: flex;
   gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
   border-bottom: 2px solid rgba(255, 255, 255, 0.5);
   overflow-x: auto;
   padding-bottom: var(--space-sm);
@@ -145,10 +147,11 @@
 
 /* Metrics */
 .metricsSection {
+  max-width: 1120px;
+  margin: 0 auto 16px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
 }
 
 .metricCard {
@@ -174,7 +177,8 @@
 
 /* Days Section */
 .daysSection {
-  margin-bottom: var(--space-lg);
+  max-width: 1120px;
+  margin: 0 auto 16px;
   animation: fadeIn 600ms ease-out;
 }
 
@@ -250,10 +254,11 @@
 
 /* Actions */
 .actions {
+  max-width: 1120px;
+  margin: 0 auto;
   display: flex;
   justify-content: center;
   gap: var(--space-md);
-  margin-top: var(--space-lg);
 }
 
 /* Responsive */

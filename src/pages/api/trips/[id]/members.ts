@@ -60,35 +60,13 @@ async function handleAddMember(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const { name, email } = req.body;
-  const normalizedEmail =
-    typeof email === 'string' && email.trim() !== '' ? email.trim().toLowerCase() : null;
+  const { name } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: 'Missing required field: name' });
   }
 
   try {
-    // Check if email already exists for this trip when email is present
-    if (normalizedEmail) {
-      const { data: existing, error: existingError } = await supabase
-        .from('members')
-        .select('id')
-        .eq('trip_id', tripId)
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-
-      if (existingError) {
-        return res.status(500).json({ error: existingError.message });
-      }
-
-      if (existing) {
-        return res.status(400).json({
-          error: 'Member with this email already exists in this trip',
-        });
-      }
-    }
-
     // Generate a user_id for the member (no auth yet)
     const userId = `member-${Math.random().toString(36).substring(2, 15)}`;
 
@@ -98,18 +76,12 @@ async function handleAddMember(
         trip_id: tripId,
         user_id: userId,
         name,
-        email: normalizedEmail,
+        email: null,
         role: 'editor',
       })
       .select();
 
     if (error) {
-      if (error.code === '23505' && error.message.includes('idx_members_email_per_trip')) {
-        return res.status(400).json({
-          error: 'Member with this email already exists in this trip',
-        });
-      }
-
       return res.status(500).json({ error: error.message });
     }
 

@@ -13,7 +13,6 @@ export default function MembersPage() {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,7 +64,7 @@ export default function MembersPage() {
       }
 
       setMembers([...members, ...result.data]);
-      setFormData({ name: '', email: '' });
+      setFormData({ name: '' });
       setIsAddingMember(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add member');
@@ -164,19 +163,6 @@ export default function MembersPage() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label>メールアドレス（オプション）</label>
-                <input
-                  type="email"
-                  placeholder="例: taro@example.com"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className={styles.input}
-                />
-              </div>
-
               <div className={styles.formActions}>
                 <Button type="submit" variant="primary">
                   追加する
@@ -200,7 +186,6 @@ export default function MembersPage() {
             <>
               <div className={styles.membersHeader}>
                 <span>メンバー</span>
-                <span>メール</span>
                 <span>参加状況</span>
                 <span>操作</span>
               </div>
@@ -219,14 +204,8 @@ export default function MembersPage() {
                       </div>
                     </div>
                     <div className={styles.memberCell}>
-                      <span className={styles.cellLabel}>メール</span>
-                      <p className={styles.email}>{member.email || '未登録'}</p>
-                    </div>
-                    <div className={styles.memberCell}>
                       <span className={styles.cellLabel}>参加状況</span>
-                      <span className={styles.statusBadge}>
-                        {member.email ? '招待済み' : '名前のみ'}
-                      </span>
+                      <span className={styles.statusBadge}>参加中</span>
                     </div>
                     <div className={styles.memberCell}>
                       <span className={styles.cellLabel}>操作</span>
