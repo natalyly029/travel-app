@@ -60,7 +60,7 @@ async function handleAddMember(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const { name, email, role = 'editor' } = req.body;
+  const { name, email } = req.body;
   const normalizedEmail =
     typeof email === 'string' && email.trim() !== '' ? email.trim().toLowerCase() : null;
 
@@ -99,7 +99,7 @@ async function handleAddMember(
         user_id: userId,
         name,
         email: normalizedEmail,
-        role,
+        role: 'editor',
       })
       .select();
 

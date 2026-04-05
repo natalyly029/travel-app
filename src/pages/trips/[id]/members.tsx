@@ -14,7 +14,6 @@ export default function MembersPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'editor',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,7 +65,7 @@ export default function MembersPage() {
       }
 
       setMembers([...members, ...result.data]);
-      setFormData({ name: '', email: '', role: 'editor' });
+      setFormData({ name: '', email: '' });
       setIsAddingMember(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add member');
@@ -178,20 +177,6 @@ export default function MembersPage() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label>ロール</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
-                  className={styles.select}
-                >
-                  <option value="editor">編集可能</option>
-                  <option value="viewer">閲覧のみ</option>
-                </select>
-              </div>
-
               <div className={styles.formActions}>
                 <Button type="submit" variant="primary">
                   追加する
@@ -216,7 +201,7 @@ export default function MembersPage() {
               <div className={styles.membersHeader}>
                 <span>メンバー</span>
                 <span>メール</span>
-                <span>ロール</span>
+                <span>権限</span>
                 <span>参加状況</span>
                 <span>操作</span>
               </div>
@@ -239,10 +224,8 @@ export default function MembersPage() {
                       <p className={styles.email}>{member.email || '未登録'}</p>
                     </div>
                     <div className={styles.memberCell}>
-                      <span className={styles.cellLabel}>ロール</span>
-                      <span className={styles.role}>
-                        {member.role === 'editor' ? '✏️ 編集可能' : '👀 閲覧のみ'}
-                      </span>
+                      <span className={styles.cellLabel}>権限</span>
+                      <span className={styles.role}>✏️ 全員編集可能</span>
                     </div>
                     <div className={styles.memberCell}>
                       <span className={styles.cellLabel}>参加状況</span>
