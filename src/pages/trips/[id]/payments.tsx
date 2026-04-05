@@ -5,6 +5,26 @@ import { Button, Card } from '@/components';
 import { Member, Payment } from '@/types';
 import styles from '@/styles/Payments.module.css';
 
+const MAX_RECEIPT_SIZE_BYTES = 3 * 1024 * 1024;
+
+async function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Failed to read receipt file'));
+        return;
+      }
+
+      const [, base64 = ''] = result.split(',');
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('Failed to read receipt file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function PaymentsPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -12,6 +32,7 @@ export default function PaymentsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     payer_id: '',
     amount: '',
@@ -26,9 +47,6 @@ export default function PaymentsPage() {
 
     const fetchData = async () => {
       try {
-
-
-        // Fetch members
         const membersRes = await fetch(`/api/trips/${id}/members`);
         const membersData = await membersRes.json();
         setMembers(membersData.data || []);
@@ -39,7 +57,6 @@ export default function PaymentsPage() {
           }));
         }
 
-        // Fetch payments
         const paymentsRes = await fetch(`/api/trips/${id}/payments`);
         const paymentsData = await paymentsRes.json();
         setPayments(paymentsData.data || []);
@@ -62,11 +79,30 @@ export default function PaymentsPage() {
       return;
     }
 
+    if (receiptFile) {
+      if (receiptFile.type !== 'application/pdf') {
+        setError('添付できるのはPDFのみです');
+        return;
+      }
+
+      if (receiptFile.size > MAX_RECEIPT_SIZE_BYTES) {
+        setError('PDFは3MB以下にしてください');
+        return;
+      }
+    }
+
     try {
+      const receiptBase64 = receiptFile ? await fileToBase64(receiptFile) : null;
+
       const response = await fetch(`/api/trips/${id}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          receiptBase64,
+          receiptName: receiptFile?.name || null,
+          receiptMimeType: receiptFile?.type || null,
+        }),
       });
 
       const result = await response.json();
@@ -82,6 +118,7 @@ export default function PaymentsPage() {
         description: '',
         payment_date: new Date().toISOString().split('T')[0],
       });
+      setReceiptFile(null);
       setIsAddingPayment(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add payment');
@@ -125,14 +162,12 @@ export default function PaymentsPage() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <div className={styles.header}>
         <Link href={`/trips/${id}`}>← 戻る</Link>
         <h1>💰 支払い記録</h1>
         <div />
       </div>
 
-      {/* Summary Card */}
       <Card className={styles.summaryCard}>
         <div className={styles.summaryContent}>
           <h3>旅の総支出</h3>
@@ -141,7 +176,6 @@ export default function PaymentsPage() {
         </div>
       </Card>
 
-      {/* Payments Section */}
       <section className={styles.paymentsSection}>
         <div className={styles.sectionHeader}>
           <h2>支払い一覧</h2>
@@ -158,7 +192,6 @@ export default function PaymentsPage() {
 
         {error && <div className={styles.errorMessage}>{error}</div>}
 
-        {/* Add Payment Form */}
         {isAddingPayment && (
           <Card className={styles.formCard}>
             <form onSubmit={handleAddPayment} className={styles.form}>
@@ -231,6 +264,24 @@ export default function PaymentsPage() {
                 </div>
               </div>
 
+              <div className={styles.formGroup}>
+                <label>領収書PDF（オプション / 3MB以下）</label>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                  className={styles.input}
+                />
+                <p className={styles.fileHint}>
+                  PDFのみ添付できます。無料枠運用のため3MB以下に制限しています。
+                </p>
+                {receiptFile && (
+                  <p className={styles.fileMeta}>
+                    添付予定: {receiptFile.name} ({(receiptFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+
               <div className={styles.formActions}>
                 <Button type="submit" variant="primary">
                   追加する
@@ -238,7 +289,10 @@ export default function PaymentsPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setIsAddingPayment(false)}
+                  onClick={() => {
+                    setIsAddingPayment(false);
+                    setReceiptFile(null);
+                  }}
                 >
                   キャンセル
                 </Button>
@@ -247,7 +301,6 @@ export default function PaymentsPage() {
           </Card>
         )}
 
-        {/* Payments List */}
         {payments.length === 0 ? (
           <p className={styles.empty}>支払い記録がありません</p>
         ) : (
@@ -262,13 +315,20 @@ export default function PaymentsPage() {
                 </div>
                 <div className={styles.paymentDetails}>
                   <p className={styles.date}>
-                    📅{' '}
-                    {new Date(payment.payment_date).toLocaleDateString(
-                      'ja-JP'
-                    )}
+                    📅 {new Date(payment.payment_date).toLocaleDateString('ja-JP')}
                   </p>
                   {payment.description && (
                     <p className={styles.description}>{payment.description}</p>
+                  )}
+                  {payment.receipt_url && (
+                    <a
+                      href={payment.receipt_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.receiptLink}
+                    >
+                      📄 {payment.receipt_name || '領収書PDFを開く'}
+                    </a>
                   )}
                 </div>
                 <Button

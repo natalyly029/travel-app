@@ -207,6 +207,28 @@
   color: var(--color-gray-dark);
 }
 
+.fileHint {
+  font-size: 0.8rem;
+  color: var(--color-gray-dark);
+}
+
+.fileMeta {
+  font-size: 0.85rem;
+  color: var(--color-purple);
+  font-weight: 600;
+}
+
+.receiptLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-purple);
+  word-break: break-all;
+}
+
 .deleteButton {
   width: 100%;
 }

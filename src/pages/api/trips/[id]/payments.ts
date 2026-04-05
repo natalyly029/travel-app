@@ -1,11 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseServer } from '@/lib/supabase';
 import { Payment } from '@/types';
 
 type ResponseData = {
   data?: Payment[];
   error?: string;
 };
+
+const RECEIPT_BUCKET = 'payment-receipts';
+const MAX_RECEIPT_SIZE_BYTES = 3 * 1024 * 1024;
 
 export default async function handler(
   req: NextApiRequest,
@@ -32,6 +35,27 @@ export default async function handler(
   res.status(405).json({ error: 'Method not allowed' });
 }
 
+async function enrichPaymentsWithReceiptUrl(payments: Payment[]) {
+  if (!payments.length) return payments;
+
+  return Promise.all(
+    payments.map(async (payment) => {
+      if (!payment.receipt_path) {
+        return payment;
+      }
+
+      const { data } = supabase.storage
+        .from(RECEIPT_BUCKET)
+        .getPublicUrl(payment.receipt_path);
+
+      return {
+        ...payment,
+        receipt_url: data.publicUrl,
+      };
+    })
+  );
+}
+
 async function handleGetPayments(
   tripId: string,
   res: NextApiResponse<ResponseData>
@@ -47,11 +71,58 @@ async function handleGetPayments(
       return res.status(500).json({ error: error.message });
     }
 
-    res.status(200).json({ data: data || [] });
+    const enriched = await enrichPaymentsWithReceiptUrl((data || []) as Payment[]);
+    res.status(200).json({ data: enriched });
   } catch (err) {
     console.error('Get payments error:', err);
     res.status(500).json({ error: 'Failed to fetch payments' });
   }
+}
+
+async function uploadReceiptIfNeeded(
+  tripId: string,
+  receiptBase64?: string,
+  receiptName?: string,
+  receiptMimeType?: string
+) {
+  if (!receiptBase64) {
+    return null;
+  }
+
+  if (!supabaseServer) {
+    throw new Error('Supabase server client is not configured');
+  }
+
+  if (receiptMimeType !== 'application/pdf') {
+    throw new Error('Only PDF files are allowed');
+  }
+
+  const buffer = Buffer.from(receiptBase64, 'base64');
+
+  if (buffer.byteLength > MAX_RECEIPT_SIZE_BYTES) {
+    throw new Error('PDF must be 3MB or smaller');
+  }
+
+  const safeFileName = (receiptName || 'receipt.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+  const filePath = `${tripId}/${Date.now()}-${safeFileName}`;
+
+  const { error } = await supabaseServer.storage
+    .from(RECEIPT_BUCKET)
+    .upload(filePath, buffer, {
+      contentType: 'application/pdf',
+      upsert: false,
+    });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    receipt_path: filePath,
+    receipt_name: receiptName || 'receipt.pdf',
+    receipt_size: buffer.byteLength,
+    receipt_mime_type: 'application/pdf',
+  };
 }
 
 async function handleCreatePayment(
@@ -59,7 +130,15 @@ async function handleCreatePayment(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const { payer_id, amount, description, payment_date } = req.body;
+  const {
+    payer_id,
+    amount,
+    description,
+    payment_date,
+    receiptBase64,
+    receiptName,
+    receiptMimeType,
+  } = req.body;
 
   if (!payer_id || !amount || !payment_date) {
     return res.status(400).json({
@@ -72,16 +151,24 @@ async function handleCreatePayment(
   }
 
   try {
+    const receiptMeta = await uploadReceiptIfNeeded(
+      tripId,
+      receiptBase64,
+      receiptName,
+      receiptMimeType
+    );
+
     const { data, error } = await supabase
       .from('payments')
       .insert({
         trip_id: tripId,
         payer_id,
         amount: parseFloat(amount),
-        amount_jpy: parseFloat(amount), // JPY固定
+        amount_jpy: parseFloat(amount),
         currency: 'JPY',
         description,
         payment_date,
+        ...(receiptMeta || {}),
       })
       .select();
 
@@ -89,10 +176,13 @@ async function handleCreatePayment(
       return res.status(500).json({ error: error.message });
     }
 
-    res.status(201).json({ data: data || [] });
+    const enriched = await enrichPaymentsWithReceiptUrl((data || []) as Payment[]);
+    res.status(201).json({ data: enriched });
   } catch (err) {
     console.error('Create payment error:', err);
-    res.status(500).json({ error: 'Failed to create payment' });
+    res.status(500).json({
+      error: err instanceof Error ? err.message : 'Failed to create payment',
+    });
   }
 }
 
@@ -108,6 +198,17 @@ async function handleDeletePayment(
   }
 
   try {
+    const { data: paymentToDelete, error: fetchError } = await supabase
+      .from('payments')
+      .select('receipt_path')
+      .eq('id', paymentId)
+      .eq('trip_id', tripId)
+      .single();
+
+    if (fetchError) {
+      return res.status(500).json({ error: fetchError.message });
+    }
+
     const { error } = await supabase
       .from('payments')
       .delete()
@@ -116,6 +217,16 @@ async function handleDeletePayment(
 
     if (error) {
       return res.status(500).json({ error: error.message });
+    }
+
+    if (paymentToDelete?.receipt_path && supabaseServer) {
+      const { error: storageError } = await supabaseServer.storage
+        .from(RECEIPT_BUCKET)
+        .remove([paymentToDelete.receipt_path]);
+
+      if (storageError) {
+        console.error('Delete receipt from storage error:', storageError);
+      }
     }
 
     res.status(200).json({ data: [] });

@@ -55,6 +55,11 @@ export interface Payment {
   amount_jpy?: number;
   description?: string;
   payment_date: string;
+  receipt_path?: string | null;
+  receipt_name?: string | null;
+  receipt_size?: number | null;
+  receipt_mime_type?: string | null;
+  receipt_url?: string | null;
   created_at: string;
   updated_at: string;
 }
