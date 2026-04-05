@@ -25,6 +25,10 @@ export default async function handler(
     return handleCreateEvent(id, req, res);
   }
 
+  if (req.method === 'DELETE') {
+    return handleDeleteEvent(id, req, res);
+  }
+
   res.status(405).json({ error: 'Method not allowed' });
 }
 
@@ -85,5 +89,34 @@ async function handleCreateEvent(
   } catch (err) {
     console.error('Create event error:', err);
     res.status(500).json({ error: 'Failed to create event' });
+  }
+}
+
+async function handleDeleteEvent(
+  tripId: string,
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
+  const { eventId } = req.body;
+
+  if (!eventId) {
+    return res.status(400).json({ error: 'Missing required field: eventId' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+      .eq('trip_id', tripId);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(200).json({ data: [] });
+  } catch (err) {
+    console.error('Delete event error:', err);
+    res.status(500).json({ error: 'Failed to delete event' });
   }
 }
