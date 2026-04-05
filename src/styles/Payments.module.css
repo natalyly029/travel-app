@@ -207,6 +207,27 @@
   color: var(--color-gray-dark);
 }
 
+.memberChecklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
+}
+
+.memberOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-gray-medium);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.memberOption input {
+  width: 16px;
+  height: 16px;
+}
+
 .fileHint {
   font-size: 0.8rem;
   color: var(--color-gray-dark);
@@ -216,6 +237,12 @@
   font-size: 0.85rem;
   color: var(--color-purple);
   font-weight: 600;
+}
+
+.billedMembers {
+  margin-top: var(--space-sm);
+  font-size: 0.85rem;
+  color: var(--color-gray-dark);
 }
 
 .receiptLink {
@@ -258,6 +285,7 @@
     justify-content: center;
   }
 
+  .memberChecklist,
   .formGrid {
     grid-template-columns: 1fr;
   }

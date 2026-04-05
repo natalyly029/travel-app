@@ -54,6 +54,24 @@ SUPABASE_SERVICE_ROLE_KEY=...
 - 支払い一覧で PDF リンク表示
 - `application/pdf` 以外は拒否
 - 3MB超は拒否
+- 支払い追加時に請求対象メンバーを複数選択可能
+- 選択メンバーは `payment_allocations` に保存
+- 清算計算は allocation ベースで按分
+
+## 6. payment_allocations 前提
+
+請求対象を保存するため、`payment_allocations` テーブルが必要です。
+
+最低限のイメージ:
+
+```sql
+create table if not exists payment_allocations (
+  id uuid primary key default gen_random_uuid(),
+  payment_id uuid not null references payments(id) on delete cascade,
+  member_id uuid not null references members(id) on delete cascade,
+  created_at timestamp default now()
+);
+```
 
 将来的に容量が増えたら、以下を検討:
 - 2MB制限へ引き下げ

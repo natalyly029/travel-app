@@ -11,6 +11,11 @@ type ResponseData = {
   error?: string;
 };
 
+type PaymentAllocationRow = {
+  payment_id: string;
+  member_id: string;
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
@@ -33,7 +38,6 @@ async function handleCalculateSettlement(
   res: NextApiResponse<ResponseData>
 ) {
   try {
-    // Fetch members
     const { data: members, error: membersError } = await supabase
       .from('members')
       .select('*')
@@ -43,7 +47,6 @@ async function handleCalculateSettlement(
       return res.status(500).json({ error: 'Failed to fetch members' });
     }
 
-    // Fetch payments
     const { data: payments, error: paymentsError } = await supabase
       .from('payments')
       .select('*')
@@ -53,8 +56,27 @@ async function handleCalculateSettlement(
       return res.status(500).json({ error: 'Failed to fetch payments' });
     }
 
-    // Calculate settlement
-    const settlement = calculateSettlement(members, payments);
+    const paymentIds = payments.map((payment) => payment.id);
+    let allocations: PaymentAllocationRow[] = [];
+
+    if (paymentIds.length > 0) {
+      const { data: allocationData, error: allocationError } = await supabase
+        .from('payment_allocations')
+        .select('payment_id, member_id')
+        .in('payment_id', paymentIds);
+
+      if (allocationError) {
+        return res.status(500).json({ error: 'Failed to fetch payment allocations' });
+      }
+
+      allocations = (allocationData || []) as PaymentAllocationRow[];
+    }
+
+    const settlement = calculateSettlement(
+      members as Member[],
+      payments as Payment[],
+      allocations
+    );
 
     res.status(200).json({ data: settlement });
   } catch (err) {
@@ -63,35 +85,49 @@ async function handleCalculateSettlement(
   }
 }
 
-function calculateSettlement(members: Member[], payments: Payment[]) {
-  // Calculate total amount paid by each member
+function calculateSettlement(
+  members: Member[],
+  payments: Payment[],
+  allocations: PaymentAllocationRow[]
+) {
   const paidByMember: Record<string, number> = {};
+  const fairShareByMember: Record<string, number> = {};
   let totalAmount = 0;
 
   members.forEach((member) => {
     paidByMember[member.id] = 0;
+    fairShareByMember[member.id] = 0;
+  });
+
+  const allocationMap = new Map<string, string[]>();
+  allocations.forEach((allocation) => {
+    const current = allocationMap.get(allocation.payment_id) || [];
+    current.push(allocation.member_id);
+    allocationMap.set(allocation.payment_id, current);
   });
 
   payments.forEach((payment) => {
     const amount = typeof payment.amount === 'number' ? payment.amount : 0;
-    paidByMember[payment.payer_id] =
-      (paidByMember[payment.payer_id] || 0) + amount;
+    paidByMember[payment.payer_id] = (paidByMember[payment.payer_id] || 0) + amount;
     totalAmount += amount;
+
+    const billedMembers = allocationMap.get(payment.id) || [];
+    const shareTargets = billedMembers.length > 0 ? billedMembers : members.map((member) => member.id);
+    const sharePerMember = shareTargets.length > 0 ? amount / shareTargets.length : 0;
+
+    shareTargets.forEach((memberId) => {
+      fairShareByMember[memberId] = (fairShareByMember[memberId] || 0) + sharePerMember;
+    });
   });
 
-  // Calculate fair share per member
-  const fairShare = members.length > 0 ? totalAmount / members.length : 0;
-
-  // Calculate balance (paid - fair share)
   const balances: Record<string, number> = {};
   members.forEach((member) => {
-    balances[member.id] = (paidByMember[member.id] || 0) - fairShare;
+    balances[member.id] = (paidByMember[member.id] || 0) - (fairShareByMember[member.id] || 0);
   });
 
-  // Convert balances to settlement (who owes whom)
   const settlements: Settlement[] = [];
   const owers = members
-    .filter((m) => balances[m.id] < -0.01) // Owes money
+    .filter((m) => balances[m.id] < -0.01)
     .map((m) => ({
       id: m.id,
       name: m.name,
@@ -99,14 +135,13 @@ function calculateSettlement(members: Member[], payments: Payment[]) {
     }));
 
   const owedbys = members
-    .filter((m) => balances[m.id] > 0.01) // Is owed money
+    .filter((m) => balances[m.id] > 0.01)
     .map((m) => ({
       id: m.id,
       name: m.name,
       amount: balances[m.id],
     }));
 
-  // Greedy matching: pair owers with owedbys
   for (let i = 0; i < owers.length && owedbys.length > 0; i++) {
     const ower = owers[i];
     let remaining = ower.amount;
@@ -133,12 +168,11 @@ function calculateSettlement(members: Member[], payments: Payment[]) {
     }
   }
 
-  // Create member balances display (paid vs fair share)
   const memberBalances: Record<string, { paid: number; fairShare: number; balance: number }> = {};
   members.forEach((member) => {
     memberBalances[member.id] = {
       paid: paidByMember[member.id] || 0,
-      fairShare,
+      fairShare: fairShareByMember[member.id] || 0,
       balance: balances[member.id],
     };
   });

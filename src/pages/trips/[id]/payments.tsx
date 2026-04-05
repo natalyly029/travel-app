@@ -33,6 +33,7 @@ export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     payer_id: '',
     amount: '',
@@ -49,12 +50,14 @@ export default function PaymentsPage() {
       try {
         const membersRes = await fetch(`/api/trips/${id}/members`);
         const membersData = await membersRes.json();
-        setMembers(membersData.data || []);
-        if (membersData.data?.length > 0) {
+        const fetchedMembers = membersData.data || [];
+        setMembers(fetchedMembers);
+        if (fetchedMembers.length > 0) {
           setFormData((prev) => ({
             ...prev,
-            payer_id: membersData.data[0].id,
+            payer_id: fetchedMembers[0].id,
           }));
+          setSelectedMemberIds(fetchedMembers.map((member: Member) => member.id));
         }
 
         const paymentsRes = await fetch(`/api/trips/${id}/payments`);
@@ -70,12 +73,25 @@ export default function PaymentsPage() {
     fetchData();
   }, [id]);
 
+  const toggleMemberSelection = (memberId: string) => {
+    setSelectedMemberIds((current) =>
+      current.includes(memberId)
+        ? current.filter((id) => id !== memberId)
+        : [...current, memberId]
+    );
+  };
+
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!formData.payer_id || !formData.amount) {
       alert('必須項目を入力してください');
+      return;
+    }
+
+    if (selectedMemberIds.length === 0) {
+      setError('請求対象メンバーを1人以上選択してください');
       return;
     }
 
@@ -99,6 +115,7 @@ export default function PaymentsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          allocated_member_ids: selectedMemberIds,
           receiptBase64,
           receiptName: receiptFile?.name || null,
           receiptMimeType: receiptFile?.type || null,
@@ -119,6 +136,7 @@ export default function PaymentsPage() {
         payment_date: new Date().toISOString().split('T')[0],
       });
       setReceiptFile(null);
+      setSelectedMemberIds(members.map((member) => member.id));
       setIsAddingPayment(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add payment');
@@ -215,6 +233,25 @@ export default function PaymentsPage() {
               </div>
 
               <div className={styles.formGroup}>
+                <label>請求対象メンバー *</label>
+                <div className={styles.memberChecklist}>
+                  {members.map((member) => (
+                    <label key={member.id} className={styles.memberOption}>
+                      <input
+                        type="checkbox"
+                        checked={selectedMemberIds.includes(member.id)}
+                        onChange={() => toggleMemberSelection(member.id)}
+                      />
+                      <span>{member.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className={styles.fileHint}>
+                  選択したメンバーだけでこの支払いを按分します。
+                </p>
+              </div>
+
+              <div className={styles.formGroup}>
                 <label>金額（円） *</label>
                 <input
                   type="number"
@@ -292,6 +329,7 @@ export default function PaymentsPage() {
                   onClick={() => {
                     setIsAddingPayment(false);
                     setReceiptFile(null);
+                    setSelectedMemberIds(members.map((member) => member.id));
                   }}
                 >
                   キャンセル
@@ -319,6 +357,11 @@ export default function PaymentsPage() {
                   </p>
                   {payment.description && (
                     <p className={styles.description}>{payment.description}</p>
+                  )}
+                  {payment.allocated_member_ids && payment.allocated_member_ids.length > 0 && (
+                    <p className={styles.billedMembers}>
+                      請求対象: {payment.allocated_member_ids.map(getMemberName).join(' / ')}
+                    </p>
                   )}
                   {payment.receipt_url && (
                     <a

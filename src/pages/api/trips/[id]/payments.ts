@@ -35,6 +35,32 @@ export default async function handler(
   res.status(405).json({ error: 'Method not allowed' });
 }
 
+async function attachAllocations(payments: Payment[]) {
+  if (!payments.length) return payments;
+
+  const paymentIds = payments.map((payment) => payment.id);
+  const { data: allocations, error } = await supabase
+    .from('payment_allocations')
+    .select('payment_id, member_id')
+    .in('payment_id', paymentIds);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const allocationMap = new Map<string, string[]>();
+  (allocations || []).forEach((allocation) => {
+    const current = allocationMap.get(allocation.payment_id) || [];
+    current.push(allocation.member_id);
+    allocationMap.set(allocation.payment_id, current);
+  });
+
+  return payments.map((payment) => ({
+    ...payment,
+    allocated_member_ids: allocationMap.get(payment.id) || [],
+  }));
+}
+
 async function enrichPaymentsWithReceiptUrl(payments: Payment[]) {
   if (!payments.length) return payments;
 
@@ -71,7 +97,8 @@ async function handleGetPayments(
       return res.status(500).json({ error: error.message });
     }
 
-    const enriched = await enrichPaymentsWithReceiptUrl((data || []) as Payment[]);
+    const withAllocations = await attachAllocations((data || []) as Payment[]);
+    const enriched = await enrichPaymentsWithReceiptUrl(withAllocations);
     res.status(200).json({ data: enriched });
   } catch (err) {
     console.error('Get payments error:', err);
@@ -138,6 +165,7 @@ async function handleCreatePayment(
     receiptBase64,
     receiptName,
     receiptMimeType,
+    allocated_member_ids,
   } = req.body;
 
   if (!payer_id || !amount || !payment_date) {
@@ -148,6 +176,14 @@ async function handleCreatePayment(
 
   if (amount <= 0) {
     return res.status(400).json({ error: 'Amount must be greater than 0' });
+  }
+
+  const normalizedAllocatedMemberIds = Array.isArray(allocated_member_ids)
+    ? [...new Set(allocated_member_ids.filter((memberId) => typeof memberId === 'string' && memberId))]
+    : [];
+
+  if (normalizedAllocatedMemberIds.length === 0) {
+    return res.status(400).json({ error: 'At least one billed member must be selected' });
   }
 
   try {
@@ -170,13 +206,28 @@ async function handleCreatePayment(
         payment_date,
         ...(receiptMeta || {}),
       })
-      .select();
+      .select()
+      .single();
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
+    if (error || !data) {
+      return res.status(500).json({ error: error?.message || 'Failed to create payment' });
     }
 
-    const enriched = await enrichPaymentsWithReceiptUrl((data || []) as Payment[]);
+    const allocationRows = normalizedAllocatedMemberIds.map((memberId) => ({
+      payment_id: data.id,
+      member_id: memberId,
+    }));
+
+    const { error: allocationError } = await supabase
+      .from('payment_allocations')
+      .insert(allocationRows);
+
+    if (allocationError) {
+      return res.status(500).json({ error: allocationError.message });
+    }
+
+    const withAllocations = await attachAllocations([data as Payment]);
+    const enriched = await enrichPaymentsWithReceiptUrl(withAllocations);
     res.status(201).json({ data: enriched });
   } catch (err) {
     console.error('Create payment error:', err);
@@ -207,6 +258,15 @@ async function handleDeletePayment(
 
     if (fetchError) {
       return res.status(500).json({ error: fetchError.message });
+    }
+
+    const { error: allocationDeleteError } = await supabase
+      .from('payment_allocations')
+      .delete()
+      .eq('payment_id', paymentId);
+
+    if (allocationDeleteError) {
+      return res.status(500).json({ error: allocationDeleteError.message });
     }
 
     const { error } = await supabase

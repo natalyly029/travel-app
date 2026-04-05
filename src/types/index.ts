@@ -60,6 +60,7 @@ export interface Payment {
   receipt_size?: number | null;
   receipt_mime_type?: string | null;
   receipt_url?: string | null;
+  allocated_member_ids?: string[];
   created_at: string;
   updated_at: string;
 }
