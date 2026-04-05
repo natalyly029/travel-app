@@ -34,6 +34,8 @@ export default function ScheduleEditor() {
   useEffect(() => {
     if (!id) return;
 
+    const requestedDayId = typeof router.query.dayId === 'string' ? router.query.dayId : '';
+
     const fetchData = async () => {
       try {
         // Fetch trip data
@@ -42,7 +44,8 @@ export default function ScheduleEditor() {
         setTrip(tripData.data.trip);
         setDays(tripData.data.days);
         if (tripData.data.days.length > 0) {
-          setSelectedDayId(tripData.data.days[0].id);
+          const matchedDay = tripData.data.days.find((day: Day) => day.id === requestedDayId);
+          setSelectedDayId(matchedDay ? matchedDay.id : tripData.data.days[0].id);
         }
 
         // Fetch events
@@ -57,7 +60,7 @@ export default function ScheduleEditor() {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, router.query.dayId]);
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();

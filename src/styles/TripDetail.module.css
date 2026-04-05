@@ -160,8 +160,26 @@
   gap: var(--space-lg);
 }
 
+.dayCardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .dayCard {
   padding: var(--space-lg);
+  cursor: pointer;
+}
+
+.dayCardLink:hover .dayCard {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.dayCardLink:focus-visible {
+  outline: 3px solid rgba(167, 139, 250, 0.35);
+  outline-offset: 4px;
+  border-radius: var(--radius-lg);
 }
 
 .dayHeader {
@@ -184,6 +202,20 @@
 .dayLabel {
   color: var(--color-gray-dark);
   font-size: 0.95rem;
+  margin-bottom: var(--space-sm);
+  word-break: break-word;
+}
+
+.dayMeta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--color-purple);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 /* Actions */

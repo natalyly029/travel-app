@@ -187,19 +187,25 @@ export default function TripDetail() {
             const preview = getDayPreview(day);
 
             return (
-              <Card key={day.id} className={styles.dayCard}>
-                <div className={styles.dayHeader}>
-                  <h3>Day {day.day_number}</h3>
-                  <span className={styles.date}>
-                    {new Date(day.date).toLocaleDateString('ja-JP', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </span>
-                </div>
-                <p className={styles.dayLabel}>{preview.headline}</p>
-                <span className={styles.dayMeta}>{preview.countLabel}</span>
-              </Card>
+              <Link
+                key={day.id}
+                href={`/trips/${trip.id}/schedule?dayId=${day.id}`}
+                className={styles.dayCardLink}
+              >
+                <Card className={styles.dayCard}>
+                  <div className={styles.dayHeader}>
+                    <h3>Day {day.day_number}</h3>
+                    <span className={styles.date}>
+                      {new Date(day.date).toLocaleDateString('ja-JP', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <p className={styles.dayLabel}>{preview.headline}</p>
+                  <span className={styles.dayMeta}>{preview.countLabel}</span>
+                </Card>
+              </Link>
             );
           })}
         </div>
