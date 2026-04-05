@@ -150,7 +150,7 @@
   max-width: 1120px;
   margin: 0 auto 16px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -298,8 +298,20 @@
     font-size: 1.5rem;
   }
 
-  .metricsSection,
   .daysList {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 1024px) {
+  .metricsSection {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .metricsSection {
     grid-template-columns: 1fr;
     gap: var(--space-md);
   }

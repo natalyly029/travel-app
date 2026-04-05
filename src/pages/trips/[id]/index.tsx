@@ -36,6 +36,8 @@ export default function TripDetail() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [memberCount, setMemberCount] = useState(0);
+  const [paymentCount, setPaymentCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -53,6 +55,8 @@ export default function TripDetail() {
 
         setTrip(result.data.trip);
         setDays(result.data.days);
+        setMemberCount(result.data.memberCount || 0);
+        setPaymentCount(result.data.paymentCount || 0);
 
         saveRecentTrip({
           id: result.data.trip.id,
@@ -193,6 +197,14 @@ export default function TripDetail() {
         <Card className={styles.metricCard}>
           <p className={styles.metricLabel}>時刻確定</p>
           <p className={styles.metricValue}>{scheduledEvents}</p>
+        </Card>
+        <Card className={styles.metricCard}>
+          <p className={styles.metricLabel}>メンバー数</p>
+          <p className={styles.metricValue}>{memberCount}</p>
+        </Card>
+        <Card className={styles.metricCard}>
+          <p className={styles.metricLabel}>支払い件数</p>
+          <p className={styles.metricValue}>{paymentCount}</p>
         </Card>
       </section>
 

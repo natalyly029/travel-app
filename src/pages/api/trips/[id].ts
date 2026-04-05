@@ -3,7 +3,13 @@ import { supabase } from '@/lib/supabase';
 import { Trip, Day } from '@/types';
 
 type ResponseData = {
-  data?: { trip: Trip; days: Day[] };
+  data?: {
+    trip: Trip;
+    days: Day[];
+    memberCount?: number;
+    paymentCount?: number;
+    settlementCount?: number;
+  };
   error?: string;
 };
 
@@ -61,7 +67,20 @@ async function handleGetTrip(
       days = await createDaysForTrip(tripId, trip.start_date, trip.end_date);
     }
 
-    res.status(200).json({ data: { trip, days } });
+    const [{ count: memberCount }, { count: paymentCount }] = await Promise.all([
+      supabase.from('members').select('*', { count: 'exact', head: true }).eq('trip_id', tripId),
+      supabase.from('payments').select('*', { count: 'exact', head: true }).eq('trip_id', tripId),
+    ]);
+
+    res.status(200).json({
+      data: {
+        trip,
+        days,
+        memberCount: memberCount || 0,
+        paymentCount: paymentCount || 0,
+        settlementCount: 0,
+      },
+    });
   } catch (err) {
     console.error('Get trip error:', err);
     res.status(500).json({ error: 'Failed to fetch trip' });
@@ -80,28 +99,31 @@ async function createDaysForTrip(
   let current = new Date(start);
   let dayNumber = 1;
 
+  const rows = [];
+
   while (current <= end) {
     const dateStr = current.toISOString().split('T')[0];
-
-    const { data, error } = await supabase
-      .from('days')
-      .insert({
-        trip_id: tripId,
-        date: dateStr,
-        day_number: dayNumber,
-      })
-      .select()
-      .single();
-
-    if (!error && data) {
-      days.push(data);
-    }
-
+    rows.push({
+      trip_id: tripId,
+      date: dateStr,
+      day_number: dayNumber,
+    });
     current.setDate(current.getDate() + 1);
     dayNumber++;
   }
 
-  return days;
+  const { data, error } = await supabase
+    .from('days')
+    .insert(rows)
+    .select()
+    .order('day_number', { ascending: true });
+
+  if (error || !data) {
+    console.error('Error creating days:', error);
+    return days;
+  }
+
+  return data as Day[];
 }
 
 async function handleUpdateTrip(

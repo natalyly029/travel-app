@@ -38,19 +38,17 @@ async function handleCalculateSettlement(
   res: NextApiResponse<ResponseData>
 ) {
   try {
-    const { data: members, error: membersError } = await supabase
-      .from('members')
-      .select('*')
-      .eq('trip_id', tripId);
+    const [membersResult, paymentsResult] = await Promise.all([
+      supabase.from('members').select('*').eq('trip_id', tripId),
+      supabase.from('payments').select('*').eq('trip_id', tripId),
+    ]);
+
+    const { data: members, error: membersError } = membersResult;
+    const { data: payments, error: paymentsError } = paymentsResult;
 
     if (membersError || !members) {
       return res.status(500).json({ error: 'Failed to fetch members' });
     }
-
-    const { data: payments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('trip_id', tripId);
 
     if (paymentsError || !payments) {
       return res.status(500).json({ error: 'Failed to fetch payments' });
