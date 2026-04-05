@@ -2,14 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button, Card } from '@/components';
-import { Trip, Day } from '@/types';
+import { Trip, Day, Event } from '@/types';
 import styles from '@/styles/TripDetail.module.css';
+
+const RECENT_TRIPS_STORAGE_KEY = 'travel-app-recent-trips';
+
+type RecentTrip = {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  updatedAt: string;
+};
+
+function saveRecentTrip(trip: RecentTrip) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const stored = window.localStorage.getItem(RECENT_TRIPS_STORAGE_KEY);
+    const parsed = stored ? (JSON.parse(stored) as RecentTrip[]) : [];
+    const normalized = Array.isArray(parsed) ? parsed : [];
+    const next = [trip, ...normalized.filter((item) => item.id !== trip.id)].slice(0, 5);
+
+    window.localStorage.setItem(RECENT_TRIPS_STORAGE_KEY, JSON.stringify(next));
+  } catch (error) {
+    console.error('Failed to persist recent trip:', error);
+  }
+}
 
 export default function TripDetail() {
   const router = useRouter();
   const { id } = router.query;
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -27,6 +53,23 @@ export default function TripDetail() {
 
         setTrip(result.data.trip);
         setDays(result.data.days);
+
+        saveRecentTrip({
+          id: result.data.trip.id,
+          title: result.data.trip.title,
+          startDate: result.data.trip.start_date,
+          endDate: result.data.trip.end_date,
+          updatedAt: new Date().toISOString(),
+        });
+
+        const scheduleResponse = await fetch(`/api/trips/${id}/schedule`);
+        const scheduleResult = await scheduleResponse.json();
+
+        if (!scheduleResponse.ok) {
+          throw new Error(scheduleResult.error || 'Failed to load schedule');
+        }
+
+        setEvents(scheduleResult.data || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
@@ -62,9 +105,34 @@ export default function TripDetail() {
     );
   }
 
-  const tripDuration = days.length > 0 
-    ? `${days.length}日間` 
+  const tripDuration = days.length > 0
+    ? `${days.length}日間`
     : '読み込み中...';
+
+  const getDayPreview = (day: Day) => {
+    const dayEvents = events
+      .filter((event) => event.day_id === day.id)
+      .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+    if (dayEvents.length === 0) {
+      return {
+        headline: day.label || '予定を追加してください',
+        countLabel: '予定なし',
+      };
+    }
+
+    const firstEvent = dayEvents[0];
+
+    return {
+      headline: firstEvent.start_time
+        ? `${firstEvent.start_time} ${firstEvent.title}`
+        : firstEvent.title,
+      countLabel:
+        dayEvents.length === 1
+          ? '1件の予定'
+          : `${dayEvents.length}件の予定`,
+    };
+  };
 
   return (
     <div className={styles.container}>
@@ -115,22 +183,25 @@ export default function TripDetail() {
       <section className={styles.daysSection}>
         <h2>旅程</h2>
         <div className={styles.daysList}>
-          {days.map((day) => (
-            <Card key={day.id} className={styles.dayCard}>
-              <div className={styles.dayHeader}>
-                <h3>Day {day.day_number}</h3>
-                <span className={styles.date}>
-                  {new Date(day.date).toLocaleDateString('ja-JP', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              </div>
-              <p className={styles.dayLabel}>
-                {day.label || '予定を追加してください'}
-              </p>
-            </Card>
-          ))}
+          {days.map((day) => {
+            const preview = getDayPreview(day);
+
+            return (
+              <Card key={day.id} className={styles.dayCard}>
+                <div className={styles.dayHeader}>
+                  <h3>Day {day.day_number}</h3>
+                  <span className={styles.date}>
+                    {new Date(day.date).toLocaleDateString('ja-JP', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
+                <p className={styles.dayLabel}>{preview.headline}</p>
+                <span className={styles.dayMeta}>{preview.countLabel}</span>
+              </Card>
+            );
+          })}
         </div>
       </section>
 

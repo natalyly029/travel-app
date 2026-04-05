@@ -60,8 +60,63 @@
 }
 
 /* Features Section */
+.recentSection,
 .features {
   margin: var(--space-2xl) 0;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.sectionHeader p {
+  color: var(--color-gray-dark);
+  margin-top: var(--space-sm);
+}
+
+.recentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-lg);
+}
+
+.recentCard {
+  padding: var(--space-xl);
+}
+
+.recentCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.recentCardHeader h3 {
+  font-size: 1.25rem;
+}
+
+.recentBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--color-purple);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.recentDates,
+.recentUpdated {
+  color: var(--color-gray-dark);
+  margin-bottom: var(--space-sm);
+}
+
+.recentButton {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-sm);
 }
 
 .features h2 {
@@ -163,11 +218,20 @@
     min-height: 50vh;
   }
 
+  .recentGrid,
   .featureGrid {
     grid-template-columns: 1fr;
   }
 
   .ctaCard {
     padding: var(--space-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .recentCard,
+  .featureCard,
+  .ctaCard {
+    padding: 16px;
   }
 }

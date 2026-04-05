@@ -3,6 +3,31 @@ import { useRouter } from 'next/router';
 import { Button, Card } from '@/components';
 import styles from '@/styles/CreateTrip.module.css';
 
+const RECENT_TRIPS_STORAGE_KEY = 'travel-app-recent-trips';
+
+type RecentTrip = {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  updatedAt: string;
+};
+
+function saveRecentTrip(trip: RecentTrip) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const stored = window.localStorage.getItem(RECENT_TRIPS_STORAGE_KEY);
+    const parsed = stored ? (JSON.parse(stored) as RecentTrip[]) : [];
+    const normalized = Array.isArray(parsed) ? parsed : [];
+
+    const next = [trip, ...normalized.filter((item) => item.id !== trip.id)].slice(0, 5);
+    window.localStorage.setItem(RECENT_TRIPS_STORAGE_KEY, JSON.stringify(next));
+  } catch (error) {
+    console.error('Failed to save recent trip:', error);
+  }
+}
+
 const TEMPLATES = [
   {
     id: 'postcard',
@@ -69,6 +94,14 @@ export default function CreateTrip() {
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create trip');
       }
+
+      saveRecentTrip({
+        id: result.data.id,
+        title,
+        startDate,
+        endDate,
+        updatedAt: new Date().toISOString(),
+      });
 
       // Redirect to trip detail page
       router.push(`/trips/${result.data.id}`);

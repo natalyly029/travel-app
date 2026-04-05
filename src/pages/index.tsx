@@ -1,9 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button, Card } from '@/components';
 import styles from '@/styles/Home.module.css';
 
+type RecentTrip = {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  updatedAt: string;
+};
+
+const RECENT_TRIPS_STORAGE_KEY = 'travel-app-recent-trips';
+
 export default function Home() {
+  const [recentTrips, setRecentTrips] = useState<RecentTrip[]>([]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const stored = window.localStorage.getItem(RECENT_TRIPS_STORAGE_KEY);
+      if (!stored) return;
+
+      const parsed = JSON.parse(stored) as RecentTrip[];
+      if (Array.isArray(parsed)) {
+        setRecentTrips(parsed);
+      }
+    } catch (error) {
+      console.error('Failed to load recent trips:', error);
+    }
+  }, []);
+
   return (
     <div className={styles.container}>
       {/* Hero Section */}
@@ -31,6 +59,37 @@ export default function Home() {
           🧳
         </div>
       </section>
+
+      {recentTrips.length > 0 && (
+        <section className={styles.recentSection}>
+          <div className={styles.sectionHeader}>
+            <h2>最近の旅</h2>
+            <p>この端末で作成した計画をすぐ開けます</p>
+          </div>
+
+          <div className={styles.recentGrid}>
+            {recentTrips.map((trip) => (
+              <Card key={trip.id} className={styles.recentCard}>
+                <div className={styles.recentCardHeader}>
+                  <h3>{trip.title}</h3>
+                  <span className={styles.recentBadge}>最近使った旅</span>
+                </div>
+                <p className={styles.recentDates}>
+                  📅 {trip.startDate} 〜 {trip.endDate}
+                </p>
+                <p className={styles.recentUpdated}>
+                  更新: {new Date(trip.updatedAt).toLocaleString('ja-JP')}
+                </p>
+                <Link href={`/trips/${trip.id}`}>
+                  <Button variant="secondary" className={styles.recentButton}>
+                    続きを開く
+                  </Button>
+                </Link>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className={styles.features}>
