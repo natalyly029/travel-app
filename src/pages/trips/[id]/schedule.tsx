@@ -145,6 +145,7 @@ export default function ScheduleEditor() {
     ? events.filter((e) => e.day_id === selectedDay.id)
     : [];
   const selectedEvent = dayEvents.find((event) => event.id === selectedEventId) || dayEvents[0] || null;
+  const timedEventsCount = dayEvents.filter((event) => event.start_time).length;
 
   return (
     <div className={styles.container}>
@@ -180,7 +181,12 @@ export default function ScheduleEditor() {
       <div className={styles.content}>
         {/* Events List */}
         <section className={styles.eventsSection}>
-          <h2>予定一覧</h2>
+          <div className={styles.sectionTitleRow}>
+            <h2>予定一覧</h2>
+            <span className={styles.sectionMeta}>
+              {dayEvents.length}件 / 時間あり {timedEventsCount}件
+            </span>
+          </div>
           {dayEvents.length === 0 ? (
             <p className={styles.emptyState}>予定がありません。追加しましょう！</p>
           ) : (
@@ -211,6 +217,9 @@ export default function ScheduleEditor() {
                           <p className={styles.location}>📍 {event.location}</p>
                         )}
                         {event.notes && <p className={styles.notes}>{event.notes}</p>}
+                        {!event.notes && !event.location && !event.start_time && (
+                          <p className={styles.notes}>詳細未設定</p>
+                        )}
                       </div>
                     </Card>
                   </button>

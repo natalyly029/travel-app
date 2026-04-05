@@ -250,6 +250,7 @@ export default function PaymentsPage() {
     (sum, p) => sum + (typeof p.amount === 'number' ? p.amount : 0),
     0
   );
+  const receiptCount = payments.filter((payment) => payment.receipt_url).length;
 
   if (isLoading) {
     return (
@@ -269,9 +270,14 @@ export default function PaymentsPage() {
 
       <Card className={styles.summaryCard}>
         <div className={styles.summaryContent}>
-          <h3>旅の総支出</h3>
-          <p className={styles.totalAmount}>¥{totalAmount.toLocaleString()}</p>
-          <span className={styles.itemCount}>{payments.length} 件の支払い</span>
+          <div>
+            <h3>旅の総支出</h3>
+            <p className={styles.totalAmount}>¥{totalAmount.toLocaleString()}</p>
+          </div>
+          <div className={styles.summaryStats}>
+            <span className={styles.itemCount}>{payments.length} 件の支払い</span>
+            <span className={styles.itemCount}>{receiptCount} 件のPDF添付</span>
+          </div>
         </div>
       </Card>
 
@@ -455,7 +461,7 @@ export default function PaymentsPage() {
                   )}
                   {payment.allocated_member_ids && payment.allocated_member_ids.length > 0 && (
                     <p className={styles.billedMembers}>
-                      請求対象: {payment.allocated_member_ids.map(getMemberName).join(' / ')}
+                      請求対象 {payment.allocated_member_ids.length}人: {payment.allocated_member_ids.map(getMemberName).join(' / ')}
                     </p>
                   )}
                   {payment.receipt_url && (

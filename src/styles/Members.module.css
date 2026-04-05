@@ -18,9 +18,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-lg);
   background: white;
-  padding: var(--space-lg);
+  padding: 16px 18px;
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
 }
@@ -41,9 +41,9 @@
 
 /* Share Card */
 .shareCard {
-  max-width: 720px;
-  margin: 0 auto var(--space-2xl);
-  padding: clamp(18px, 3vw, 28px);
+  max-width: 960px;
+  margin: 0 auto 16px;
+  padding: 16px 18px;
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(252, 165, 165, 0.1));
   border: 2px solid rgba(167, 139, 250, 0.2);
   animation: fadeIn 500ms ease-out;
@@ -156,8 +156,8 @@
 /* Members List */
 .membersList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-lg);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
 }
 
 .empty {
@@ -172,14 +172,14 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--space-lg);
-  gap: var(--space-md);
+  padding: 14px;
+  gap: 10px;
   min-width: 0;
 }
 
 .memberAvatar {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
   color: white;
@@ -187,7 +187,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
 }
 
 .memberInfo {
@@ -195,15 +195,16 @@
 }
 
 .memberInfo h4 {
-  margin: 0 0 var(--space-xs) 0;
-  font-size: 1.125rem;
+  margin: 0 0 4px 0;
+  font-size: 1rem;
 }
 
 .email {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--color-gray-dark);
   margin: 0;
   word-break: break-all;
+  line-height: 1.35;
 }
 
 .role {
