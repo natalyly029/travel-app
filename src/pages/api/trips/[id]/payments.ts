@@ -65,25 +65,23 @@ async function attachAllocations(payments: Payment[]) {
   }));
 }
 
-async function enrichPaymentsWithReceiptUrl(payments: Payment[]) {
+function enrichPaymentsWithReceiptUrl(payments: Payment[]) {
   if (!payments.length) return payments;
 
-  return Promise.all(
-    payments.map(async (payment) => {
-      if (!payment.receipt_path) {
-        return payment;
-      }
+  return payments.map((payment) => {
+    if (!payment.receipt_path) {
+      return payment;
+    }
 
-      const { data } = supabase.storage
-        .from(RECEIPT_BUCKET)
-        .getPublicUrl(payment.receipt_path);
+    const { data } = supabase.storage
+      .from(RECEIPT_BUCKET)
+      .getPublicUrl(payment.receipt_path);
 
-      return {
-        ...payment,
-        receipt_url: data.publicUrl,
-      };
-    })
-  );
+    return {
+      ...payment,
+      receipt_url: data.publicUrl,
+    };
+  });
 }
 
 async function fetchAndEnrichPaymentsByIds(paymentIds: string[]) {

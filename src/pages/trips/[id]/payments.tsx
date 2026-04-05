@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button, Card } from '@/components';
@@ -245,61 +245,79 @@ export default function PaymentsPage() {
     }
   };
 
-  const getMemberName = (memberId: string) => {
-    return members.find((m) => m.id === memberId)?.name || '不明';
-  };
+  const memberNameMap = useMemo(() => {
+    return new Map(members.map((member) => [member.id, member.name]));
+  }, [members]);
 
-  const filteredPayments = payments
-    .filter((payment) => {
-      if (payerFilter !== 'all' && payment.payer_id !== payerFilter) {
-        return false;
-      }
+  const getMemberName = (memberId: string) => memberNameMap.get(memberId) || '不明';
 
-      if (receiptFilter === 'with-receipt' && !payment.receipt_url) {
-        return false;
-      }
+  const filteredPayments = useMemo(() => {
+    return payments
+      .filter((payment) => {
+        if (payerFilter !== 'all' && payment.payer_id !== payerFilter) {
+          return false;
+        }
 
-      if (receiptFilter === 'without-receipt' && payment.receipt_url) {
-        return false;
-      }
+        if (receiptFilter === 'with-receipt' && !payment.receipt_url) {
+          return false;
+        }
 
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortOrder === 'date-desc') {
-        return b.payment_date.localeCompare(a.payment_date);
-      }
-      if (sortOrder === 'date-asc') {
-        return a.payment_date.localeCompare(b.payment_date);
-      }
-      if (sortOrder === 'amount-desc') {
-        return (b.amount || 0) - (a.amount || 0);
-      }
-      return (a.amount || 0) - (b.amount || 0);
-    });
+        if (receiptFilter === 'without-receipt' && payment.receipt_url) {
+          return false;
+        }
 
-  const totalAmount = payments.reduce(
-    (sum, p) => sum + (typeof p.amount === 'number' ? p.amount : 0),
-    0
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortOrder === 'date-desc') {
+          return b.payment_date.localeCompare(a.payment_date);
+        }
+        if (sortOrder === 'date-asc') {
+          return a.payment_date.localeCompare(b.payment_date);
+        }
+        if (sortOrder === 'amount-desc') {
+          return (b.amount || 0) - (a.amount || 0);
+        }
+        return (a.amount || 0) - (b.amount || 0);
+      });
+  }, [payments, payerFilter, receiptFilter, sortOrder]);
+
+  const totalAmount = useMemo(
+    () => payments.reduce((sum, p) => sum + (typeof p.amount === 'number' ? p.amount : 0), 0),
+    [payments]
   );
-  const receiptCount = payments.filter((payment) => payment.receipt_url).length;
-  const memberSummaries = members.map((member) => {
-    const paidPayments = payments.filter((payment) => payment.payer_id === member.id);
-    const totalPaid = paidPayments.reduce(
-      (sum, payment) => sum + (typeof payment.amount === 'number' ? payment.amount : 0),
-      0
-    );
-    const involvedCount = payments.filter((payment) =>
-      payment.allocated_member_ids?.includes(member.id)
-    ).length;
 
-    return {
-      member,
-      totalPaid,
-      paidCount: paidPayments.length,
-      involvedCount,
-    };
-  }).sort((a, b) => b.totalPaid - a.totalPaid);
+  const receiptCount = useMemo(
+    () => payments.filter((payment) => payment.receipt_url).length,
+    [payments]
+  );
+
+  const memberSummaries = useMemo(() => {
+    return members
+      .map((member) => {
+        let totalPaid = 0;
+        let paidCount = 0;
+        let involvedCount = 0;
+
+        for (const payment of payments) {
+          if (payment.payer_id === member.id) {
+            totalPaid += typeof payment.amount === 'number' ? payment.amount : 0;
+            paidCount += 1;
+          }
+          if (payment.allocated_member_ids?.includes(member.id)) {
+            involvedCount += 1;
+          }
+        }
+
+        return {
+          member,
+          totalPaid,
+          paidCount,
+          involvedCount,
+        };
+      })
+      .sort((a, b) => b.totalPaid - a.totalPaid);
+  }, [members, payments]);
 
   if (isLoading) {
     return (
