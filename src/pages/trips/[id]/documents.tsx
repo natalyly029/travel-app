@@ -157,8 +157,8 @@ export default function DocumentsPage() {
               </div>
               <div className={styles.formGroup}>
                 <label>ファイル *</label>
-                <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp,text/plain" onChange={(e) => setFile(e.target.files?.[0] || null)} className={styles.input} required />
-                <p className={styles.hint}>PDF / PNG / JPG / WEBP / TXT、10MB以下</p>
+                <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} className={styles.input} required />
+                <p className={styles.hint}>PDF / PNG / JPG / WEBP、10MB以下</p>
               </div>
               <div className={styles.formActions}>
                 <Button type="submit" variant="primary">アップロード</Button>

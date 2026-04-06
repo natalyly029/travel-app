@@ -20,7 +20,6 @@ trip-documents
   - image/png
   - image/jpeg
   - image/webp
-  - text/plain
 
 ### 2. テーブル作成
 
@@ -70,6 +69,5 @@ using (bucket_id = 'trip-documents');
   - PNG
   - JPG
   - WEBP
-  - TXT
 - サイズ上限: 10MB
 - 一覧表示 / 開く / 削除に対応
