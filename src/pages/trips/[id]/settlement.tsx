@@ -227,14 +227,6 @@ export default function SettlementPage() {
         </div>
       </Card>
 
-      {/* Actions */}
-      <div className={styles.actions}>
-        <Link href={`/trips/${id}`}>
-          <Button variant="primary" size="lg">
-            ✈️ 旅に戻る
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 }
