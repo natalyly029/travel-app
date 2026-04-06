@@ -78,12 +78,25 @@ async function handleGetTrip(
 
     const memberCount = (membersResult.data || []).length;
     const paymentCount = paymentsCountResult.count || 0;
+    const daysById = new Map(((days || []) as Day[]).map((day) => [day.id, day]));
     const events = ((eventsResult.data || []) as Event[]).sort((a, b) => {
-      const aKey = `${a.day_id}-${a.start_time || '99:99'}`;
-      const bKey = `${b.day_id}-${b.start_time || '99:99'}`;
+      const aDay = daysById.get(a.day_id)?.date || '';
+      const bDay = daysById.get(b.day_id)?.date || '';
+      const aKey = `${aDay}-${a.start_time || '99:99'}`;
+      const bKey = `${bDay}-${b.start_time || '99:99'}`;
       return aKey.localeCompare(bKey);
     });
-    const nextEvent = events.find((event) => event.start_time) || events[0] || null;
+
+    const now = new Date();
+    const upcomingTimedEvents = events.filter((event) => {
+      if (!event.start_time) return false;
+      const dayDate = daysById.get(event.day_id)?.date;
+      if (!dayDate) return false;
+      const eventDateTime = new Date(`${dayDate}T${event.start_time}:00`);
+      return eventDateTime.getTime() >= now.getTime();
+    });
+
+    const nextEvent = upcomingTimedEvents[0] || events.find((event) => event.start_time) || events[0] || null;
 
     res.status(200).json({
       data: {
