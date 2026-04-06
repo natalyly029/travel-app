@@ -147,12 +147,12 @@ async function handleUpdateTrip(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const { title, description, template } = req.body;
+  const { title, description } = req.body;
 
   try {
     const { data, error } = await supabase
       .from('trips')
-      .update({ title, description, template })
+      .update({ title, description })
       .eq('id', tripId)
       .select()
       .single();

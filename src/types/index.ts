@@ -4,7 +4,6 @@ export interface Trip {
   description?: string;
   start_date: string;
   end_date: string;
-  template: 'postcard' | 'brutalist' | 'soft' | 'minimalist' | 'maximalist';
   created_by: string;
   share_token?: string;
   is_public: boolean;

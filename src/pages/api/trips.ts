@@ -27,12 +27,12 @@ async function handleCreateTrip(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const { title, description, start_date, end_date, template } = req.body;
+  const { title, description, start_date, end_date } = req.body;
 
   // Validation
-  if (!title || !start_date || !end_date || !template) {
+  if (!title || !start_date || !end_date) {
     return res.status(400).json({
-      error: 'Missing required fields: title, start_date, end_date, template',
+      error: 'Missing required fields: title, start_date, end_date',
     });
   }
 
@@ -50,7 +50,6 @@ async function handleCreateTrip(
         description,
         start_date,
         end_date,
-        template,
         share_token: shareToken,
         created_by: creatorId,
         is_public: true, // Allow public access by default
