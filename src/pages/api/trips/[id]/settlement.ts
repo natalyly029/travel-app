@@ -146,11 +146,23 @@ function calculateSettlement(
     balances[member.id] = (paidByMember[member.id] || 0) - (fairShareByMember[member.id] || 0);
   });
 
+  const completedTransfers = transfers.filter((transfer) => transfer.is_completed);
+  completedTransfers.forEach((transfer) => {
+    balances[transfer.from_member_id] = (balances[transfer.from_member_id] || 0) + transfer.amount;
+    balances[transfer.to_member_id] = (balances[transfer.to_member_id] || 0) - transfer.amount;
+  });
+
   const completedTransferMap = new Map(
-    transfers
-      .filter((transfer) => transfer.is_completed)
-      .map((transfer) => [`${transfer.from_member_id}:${transfer.to_member_id}`, transfer])
+    completedTransfers.map((transfer) => [`${transfer.from_member_id}:${transfer.to_member_id}:${transfer.amount}`, transfer])
   );
+
+  const completedTransferHistoryMap = new Map<string, SettlementTransferRow[]>();
+  completedTransfers.forEach((transfer) => {
+    const key = `${transfer.from_member_id}:${transfer.to_member_id}`;
+    const current = completedTransferHistoryMap.get(key) || [];
+    current.push(transfer);
+    completedTransferHistoryMap.set(key, current);
+  });
 
   const settlements: Settlement[] = [];
   const owers = members
@@ -177,10 +189,15 @@ function calculateSettlement(
       const owedby = owedbys[0];
       const settleAmount = Math.min(remaining, owedby.amount);
 
-      const transferKey = `${ower.id}:${owedby.id}`;
+      const transferKey = `${ower.id}:${owedby.id}:${settleAmount}`;
       const completedTransfer = completedTransferMap.get(transferKey);
+      const historyKey = `${ower.id}:${owedby.id}`;
+      const transferHistory = (completedTransferHistoryMap.get(historyKey) || []).map((transfer) => ({
+        amount: transfer.amount,
+        completed_at: transfer.completed_at || null,
+      }));
 
-      if (!completedTransfer || completedTransfer.amount !== settleAmount) {
+      if (!completedTransfer) {
         settlements.push({
           from_member_id: ower.id,
           from_name: ower.name,
@@ -188,6 +205,7 @@ function calculateSettlement(
           to_name: owedby.name,
           amount: settleAmount,
           currency: 'JPY',
+          history: transferHistory,
         });
       }
 

@@ -80,6 +80,11 @@ export interface PaymentAllocation {
   created_at: string;
 }
 
+export interface SettlementHistoryItem {
+  amount: number;
+  completed_at?: string | null;
+}
+
 export interface Settlement {
   from_member_id: string;
   from_name: string;
@@ -89,6 +94,7 @@ export interface Settlement {
   currency: string;
   is_completed?: boolean;
   completed_at?: string | null;
+  history?: SettlementHistoryItem[];
 }
 
 export interface TripDocument {

@@ -66,6 +66,12 @@ export default function SettlementPage() {
   }, [id]);
 
   const handleMarkBulkSettlementComplete = async (settlement: Settlement) => {
+    const confirmed = window.confirm(
+      `${settlement.from_name} から ${settlement.to_name} へ ¥${settlement.amount.toLocaleString()} を清算済みにしますか？`
+    );
+
+    if (!confirmed) return;
+
     const key = settlementKey(settlement.from_member_id, settlement.to_member_id);
     setIsUpdatingSettlement(key);
 
@@ -168,6 +174,19 @@ export default function SettlementPage() {
                   </div>
                   <div className={styles.settlementCell}>
                     <span className={styles.cellLabel}>操作</span>
+                    {settlement.history && settlement.history.length > 0 && (
+                      <div className={styles.historyBlock}>
+                        <p className={styles.historyTitle}>支払い履歴</p>
+                        <ul className={styles.historyList}>
+                          {settlement.history.map((item, historyIdx) => (
+                            <li key={historyIdx}>
+                              ¥{item.amount.toLocaleString()}
+                              {item.completed_at ? ` / ${new Date(item.completed_at).toLocaleString('ja-JP')}` : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     <div className={styles.rowActions}>
                       <Button
                         variant="secondary"
