@@ -37,10 +37,14 @@ export default function SettlementPage() {
           throw new Error(result.error || 'Failed to calculate settlement');
         }
 
-        setSettlements(result.data.settlements || []);
-        setMemberBalances(result.data.memberBalances || {});
-        setTotalAmount(result.data.totalAmount || 0);
-        setMembers(tripResult.data.members || []);
+        if (!tripResponse.ok) {
+          throw new Error(tripResult.error || 'Failed to load trip members');
+        }
+
+        setSettlements(result.data?.settlements || []);
+        setMemberBalances(result.data?.memberBalances || {});
+        setTotalAmount(result.data?.totalAmount || 0);
+        setMembers(tripResult.data?.members || []);
       } catch (err) {
         // Settlement calculation error - show settled state
         console.error('Settlement error:', err);
