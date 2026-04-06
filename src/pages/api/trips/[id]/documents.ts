@@ -8,7 +8,7 @@ type ResponseData = {
 };
 
 const DOCUMENT_BUCKET = 'trip-documents';
-const MAX_DOCUMENT_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
   'image/png',
@@ -93,7 +93,7 @@ async function handleCreateDocument(tripId: string, req: NextApiRequest, res: Ne
     const buffer = Buffer.from(fileBase64, 'base64');
 
     if (buffer.byteLength > MAX_DOCUMENT_SIZE_BYTES) {
-      return res.status(400).json({ error: 'File must be 5MB or smaller' });
+      return res.status(400).json({ error: 'File must be 10MB or smaller' });
     }
 
     const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');

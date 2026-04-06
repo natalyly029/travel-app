@@ -5,7 +5,7 @@ import { Button, Card } from '@/components';
 import { Trip, TripDocument } from '@/types';
 import styles from '@/styles/Documents.module.css';
 
-const MAX_DOCUMENT_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 
 async function fileToBase64(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -65,7 +65,7 @@ export default function DocumentsPage() {
     }
 
     if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
-      setError('ファイルは5MB以下にしてください');
+      setError('ファイルは10MB以下にしてください');
       return;
     }
 
@@ -146,7 +146,7 @@ export default function DocumentsPage() {
               <div className={styles.formGroup}>
                 <label>ファイル *</label>
                 <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp,text/plain" onChange={(e) => setFile(e.target.files?.[0] || null)} className={styles.input} required />
-                <p className={styles.hint}>PDF / PNG / JPG / WEBP / TXT、5MB以下</p>
+                <p className={styles.hint}>PDF / PNG / JPG / WEBP / TXT、10MB以下</p>
               </div>
               <div className={styles.formActions}>
                 <Button type="submit" variant="primary">アップロード</Button>

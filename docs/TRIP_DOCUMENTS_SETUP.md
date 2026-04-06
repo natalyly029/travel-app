@@ -14,7 +14,7 @@ trip-documents
 
 推奨:
 - public bucket: ON
-- max file size: 5 MB
+- max file size: 10 MB
 - allowed MIME types:
   - application/pdf
   - image/png
@@ -46,5 +46,5 @@ create table if not exists trip_documents (
   - JPG
   - WEBP
   - TXT
-- サイズ上限: 5MB
+- サイズ上限: 10MB
 - 一覧表示 / 開く / 削除に対応
