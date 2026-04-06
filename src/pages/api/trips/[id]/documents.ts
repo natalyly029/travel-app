@@ -7,6 +7,14 @@ type ResponseData = {
   error?: string;
 };
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '12mb',
+    },
+  },
+};
+
 const DOCUMENT_BUCKET = 'trip-documents';
 const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [

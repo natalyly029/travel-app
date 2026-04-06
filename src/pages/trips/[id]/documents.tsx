@@ -21,6 +21,16 @@ async function fileToBase64(file: File) {
   });
 }
 
+async function parseApiResponse(response: Response) {
+  const text = await response.text();
+
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(text || 'Unexpected server response');
+  }
+}
+
 export default function DocumentsPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -41,8 +51,8 @@ export default function DocumentsPage() {
           fetch(`/api/trips/${id}`),
           fetch(`/api/trips/${id}/documents`),
         ]);
-        const tripData = await tripRes.json();
-        const docsData = await docsRes.json();
+        const tripData = await parseApiResponse(tripRes);
+        const docsData = await parseApiResponse(docsRes);
         setTrip(tripData.data.trip);
         setDocuments(docsData.data || []);
       } catch (err) {
@@ -81,7 +91,7 @@ export default function DocumentsPage() {
           fileMimeType: file.type,
         }),
       });
-      const result = await response.json();
+      const result = await parseApiResponse(response);
       if (!response.ok) throw new Error(result.error || 'Failed to upload document');
       setDocuments((current) => [...result.data, ...current]);
       setTitle('');
