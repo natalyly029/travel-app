@@ -71,13 +71,21 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.sharePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
   padding: var(--space-lg);
   background: var(--color-gray-light);
   border-radius: var(--radius-md);
   min-width: 0;
 }
 
-.shareSection p {
+.sharePanel p {
   font-weight: 600;
   font-size: 0.875rem;
 }

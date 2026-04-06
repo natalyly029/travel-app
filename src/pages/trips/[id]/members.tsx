@@ -11,6 +11,7 @@ export default function MembersPage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [isAddingMember, setIsAddingMember] = useState(false);
+  const [showSharePanel, setShowSharePanel] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
   });
@@ -105,24 +106,39 @@ export default function MembersPage() {
 
       {/* Share Section */}
       <Card className={styles.shareCard}>
-        <h3>🔗 友達を招待</h3>
-        <p>このリンクを友達に送って、そのまま一緒に旅を編集できます</p>
-        <code className={styles.shareLink}>
-          {typeof window !== 'undefined'
-            ? `${window.location.origin}/trips/join/${trip?.share_token}`
-            : 'リンク読み込み中...'}
-        </code>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            const link = `${window.location.origin}/trips/join/${trip?.share_token}`;
-            navigator.clipboard.writeText(link);
-            alert('リンクをコピーしました！');
-          }}
-          className={styles.copyButton}
-        >
-          📋 リンクをコピー
-        </Button>
+        <div className={styles.shareCardHeader}>
+          <div>
+            <h3>🔗 友達を招待</h3>
+            <p>必要なときだけ招待リンクを表示できます</p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowSharePanel((current) => !current)}
+          >
+            {showSharePanel ? '閉じる' : '表示する'}
+          </Button>
+        </div>
+        {showSharePanel && (
+          <>
+            <code className={styles.shareLink}>
+              {typeof window !== 'undefined'
+                ? `${window.location.origin}/trips/join/${trip?.share_token}`
+                : 'リンク読み込み中...'}
+            </code>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const link = `${window.location.origin}/trips/join/${trip?.share_token}`;
+                navigator.clipboard.writeText(link);
+                alert('リンクをコピーしました！');
+              }}
+              className={styles.copyButton}
+            >
+              📋 リンクをコピー
+            </Button>
+          </>
+        )}
       </Card>
 
       {/* Members List */}

@@ -40,6 +40,7 @@ export default function TripDetail() {
   const [memberCount, setMemberCount] = useState(0);
   const [paymentCount, setPaymentCount] = useState(0);
   const [nextEvent, setNextEvent] = useState<Event | null>(null);
+  const [showSharePanel, setShowSharePanel] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -151,19 +152,26 @@ export default function TripDetail() {
         </div>
 
         <div className={styles.shareSection}>
-          <p>シェアコード</p>
-          <code className={styles.shareToken}>{trip.share_token}</code>
-          <button
-            className={styles.copyButton}
-            onClick={() => {
-              navigator.clipboard.writeText(
-                `${window.location.origin}/trips/join/${trip.share_token}`
-              );
-              alert('リンクをコピーしました！');
-            }}
-          >
-            🔗 リンクをコピー
-          </button>
+          <Button variant="secondary" onClick={() => setShowSharePanel((current) => !current)}>
+            {showSharePanel ? '招待リンクを閉じる' : '招待リンクを表示'}
+          </Button>
+          {showSharePanel && (
+            <div className={styles.sharePanel}>
+              <p>シェアコード</p>
+              <code className={styles.shareToken}>{trip.share_token}</code>
+              <button
+                className={styles.copyButton}
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `${window.location.origin}/trips/join/${trip.share_token}`
+                  );
+                  alert('リンクをコピーしました！');
+                }}
+              >
+                🔗 リンクをコピー
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

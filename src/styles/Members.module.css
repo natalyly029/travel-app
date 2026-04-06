@@ -48,14 +48,22 @@
   animation: fadeIn 500ms ease-out;
 }
 
-.shareCard h3 {
+.shareCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
   margin-bottom: var(--space-md);
+}
+
+.shareCard h3 {
+  margin-bottom: var(--space-sm);
   font-size: 1.25rem;
 }
 
 .shareCard p {
   color: var(--color-gray-dark);
-  margin-bottom: var(--space-md);
+  margin-bottom: 0;
 }
 
 .shareLink {
@@ -277,6 +285,11 @@
   .formCard,
   .memberCard {
     padding: 14px;
+  }
+
+  .shareCardHeader {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .shareLink {
