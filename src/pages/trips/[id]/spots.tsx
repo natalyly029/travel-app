@@ -36,6 +36,7 @@ export default function SpotsPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [isAdding, setIsAdding] = useState(false);
   const [scheduleTargetDayBySpot, setScheduleTargetDayBySpot] = useState<Record<string, string>>({});
+  const [scheduleTimeBySpot, setScheduleTimeBySpot] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -158,6 +159,7 @@ export default function SpotsPage() {
           day_id: selectedDayId,
           type: 'activity',
           title: spot.name,
+          start_time: scheduleTimeBySpot[spot.id] || '',
           location: spot.area || '',
           notes: spot.notes || '',
         }),
@@ -270,6 +272,12 @@ export default function SpotsPage() {
                         </option>
                       ))}
                     </select>
+                    <input
+                      type="time"
+                      className={styles.daySelect}
+                      value={scheduleTimeBySpot[spot.id] || ''}
+                      onChange={(e) => setScheduleTimeBySpot((current) => ({ ...current, [spot.id]: e.target.value }))}
+                    />
                     <Button variant="secondary" size="sm" onClick={() => handleAddToSchedule(spot)}>予定に追加</Button>
                     <Button variant="secondary" size="sm" onClick={() => handleDeleteSpot(spot.id)}>削除</Button>
                   </div>
