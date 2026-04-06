@@ -80,3 +80,15 @@ export interface Settlement {
   amount: number;
   currency: string;
 }
+
+export interface TripDocument {
+  id: string;
+  trip_id: string;
+  title: string;
+  file_path: string;
+  file_name: string;
+  file_size?: number | null;
+  file_mime_type?: string | null;
+  file_url?: string | null;
+  created_at: string;
+}

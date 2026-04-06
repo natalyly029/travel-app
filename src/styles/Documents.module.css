@@ -1,0 +1,134 @@
+.container {
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 28px);
+  background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 2rem;
+}
+
+.header {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: white;
+  padding: 16px 18px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
+}
+
+.topCardSection,
+.documentsSection {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+}
+
+.topCard {
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  color: var(--color-gray-dark);
+  font-weight: 700;
+}
+
+.meta,
+.hint,
+.documentMeta {
+  margin: 4px 0 0;
+  font-size: 0.84rem;
+  color: var(--color-gray-dark);
+}
+
+.formCard,
+.documentCard {
+  padding: 14px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input {
+  padding: 10px 12px;
+  border: 2px solid var(--color-gray-medium);
+  border-radius: 14px;
+}
+
+.formActions,
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.documentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.documentMain {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.openLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--color-purple);
+  font-weight: 700;
+}
+
+.errorMessage {
+  padding: 12px;
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: 14px;
+  color: #991b1b;
+  margin-bottom: 14px;
+}
+
+.empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-gray-dark);
+}
+
+@media (max-width: 768px) {
+  .header,
+  .topCard,
+  .documentMain,
+  .formActions,
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -175,6 +175,9 @@ export default function TripDetail() {
         <Link href={`/trips/${trip.id}/payments`} className={styles.tab}>
           💰 支払い
         </Link>
+        <Link href={`/trips/${trip.id}/documents`} className={styles.tab}>
+          📎 資料
+        </Link>
         <Link href={`/trips/${trip.id}/settlement`} className={styles.tab}>
           🧾 清算
         </Link>
