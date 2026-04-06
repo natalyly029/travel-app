@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button, Card } from '@/components';
@@ -61,8 +61,8 @@ export default function SettlementPage() {
   }
 
   const isSettled = settlements.length === 0;
-  const getMemberName = (memberId: string) =>
-    members.find((member) => member.id === memberId)?.name || memberId;
+  const memberNameMap = useMemo(() => new Map(members.map((member) => [member.id, member.name])), [members]);
+  const getMemberName = (memberId: string) => memberNameMap.get(memberId) || memberId;
 
   return (
     <div className={styles.container}>

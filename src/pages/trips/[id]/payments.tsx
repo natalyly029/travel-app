@@ -52,9 +52,9 @@ export default function PaymentsPage() {
 
     const fetchData = async () => {
       try {
-        const membersRes = await fetch(`/api/trips/${id}/members`);
-        const membersData = await membersRes.json();
-        const fetchedMembers = membersData.data || [];
+        const tripRes = await fetch(`/api/trips/${id}`);
+        const tripData = await tripRes.json();
+        const fetchedMembers = tripData.data.members || [];
         setMembers(fetchedMembers);
         if (fetchedMembers.length > 0) {
           setFormData((prev) => ({
@@ -160,7 +160,7 @@ export default function PaymentsPage() {
         throw new Error(result.error || 'Failed to add payment');
       }
 
-      setPayments([...result.data, ...payments]);
+      setPayments((current) => [...result.data, ...current]);
       resetForm();
       setIsAddingPayment(false);
     } catch (err) {
@@ -236,7 +236,7 @@ export default function PaymentsPage() {
 
       if (!response.ok) throw new Error('Failed to delete payment');
 
-      setPayments(payments.filter((p) => p.id !== paymentId));
+      setPayments((current) => current.filter((p) => p.id !== paymentId));
       if (editingPaymentId === paymentId) {
         resetForm();
       }
