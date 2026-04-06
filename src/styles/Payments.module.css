@@ -288,8 +288,65 @@
   align-items: start;
 }
 
-.paymentCell {
+.paymentMain {
+  display: none;
+}
+
+.paymentDesktopCell,
+.paymentActionsCell {
   min-width: 0;
+}
+
+.paymentTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.paymentTitle {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.paymentMetaInline {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-gray-dark);
+}
+
+.paymentMemberRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.memberAvatarGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.memberAvatarChip {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(167, 139, 250, 0.14);
+  color: var(--color-purple);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.memberCountLabel,
+.memberEmpty {
+  font-size: 0.8rem;
+  color: var(--color-gray-dark);
 }
 
 .cellLabel {
@@ -313,7 +370,8 @@
   font-size: 1rem;
 }
 
-.amount {
+.amount,
+.amountDesktop {
   font-size: 1.1rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
@@ -446,10 +504,25 @@
 
   .memberSummaryGrid,
   .filterGrid,
-  .paymentGrid,
   .memberChecklist,
   .formGrid {
     grid-template-columns: 1fr;
+  }
+
+  .paymentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .paymentMain {
+    display: block;
+  }
+
+  .paymentDesktopCell {
+    display: none;
+  }
+
+  .paymentActionsCell {
+    margin-top: 4px;
   }
 
   .cellLabel {
@@ -462,13 +535,23 @@
     flex-direction: column;
   }
 
+  .cardActions {
+    gap: 8px;
+  }
+
   .formActions button,
-  .actionButton {
+  .actionButton,
+  .paymentActionsCell button {
     width: 100%;
   }
 
-  .paymentHeader {
-    flex-direction: column;
+  .paymentCard {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .amount {
+    font-size: 1.25rem;
   }
 
   .totalAmount {

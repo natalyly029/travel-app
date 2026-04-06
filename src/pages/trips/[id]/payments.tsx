@@ -263,6 +263,7 @@ export default function PaymentsPage() {
   }, [members]);
 
   const getMemberName = (memberId: string) => memberNameMap.get(memberId) || '不明';
+  const getMemberInitial = (memberId: string) => getMemberName(memberId).charAt(0).toUpperCase();
 
   const filteredPayments = useMemo(() => {
     return payments
@@ -613,17 +614,36 @@ export default function PaymentsPage() {
             {filteredPayments.map((payment) => (
               <Card key={payment.id} className={styles.paymentCard}>
                 <div className={styles.paymentGrid}>
-                  <div className={styles.paymentCell}>
-                    <span className={styles.cellLabel}>支払者</span>
-                    <h4>{getMemberName(payment.payer_id)}</h4>
-                  </div>
-                  <div className={styles.paymentCell}>
-                    <span className={styles.cellLabel}>日付</span>
-                    <p className={styles.date}>{new Date(payment.payment_date).toLocaleDateString('ja-JP')}</p>
-                  </div>
-                  <div className={styles.paymentCell}>
-                    <span className={styles.cellLabel}>内容</span>
-                    <p className={styles.description}>{payment.description || '—'}</p>
+                  <div className={styles.paymentMain}>
+                    <div className={styles.paymentTopRow}>
+                      <div>
+                        <h4 className={styles.paymentTitle}>{payment.description || '支払い'}</h4>
+                        <p className={styles.paymentMetaInline}>
+                          {getMemberName(payment.payer_id)} が立替 ・ {new Date(payment.payment_date).toLocaleDateString('ja-JP')}
+                        </p>
+                      </div>
+                      <span className={styles.amount}>
+                        ¥{(typeof payment.amount === 'number' ? payment.amount : 0).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className={styles.paymentMemberRow}>
+                      <div className={styles.memberAvatarGroup}>
+                        {payment.allocated_member_ids && payment.allocated_member_ids.length > 0 ? (
+                          payment.allocated_member_ids.map((memberId) => (
+                            <span key={memberId} className={styles.memberAvatarChip} title={getMemberName(memberId)}>
+                              {getMemberInitial(memberId)}
+                            </span>
+                          ))
+                        ) : (
+                          <span className={styles.memberEmpty}>対象なし</span>
+                        )}
+                      </div>
+                      <span className={styles.memberCountLabel}>
+                        {payment.allocated_member_ids?.length || 0}人
+                      </span>
+                    </div>
+
                     {payment.receipt_url && (
                       <a
                         href={payment.receipt_url}
@@ -635,7 +655,20 @@ export default function PaymentsPage() {
                       </a>
                     )}
                   </div>
-                  <div className={styles.paymentCell}>
+
+                  <div className={styles.paymentDesktopCell}>
+                    <span className={styles.cellLabel}>支払者</span>
+                    <h4>{getMemberName(payment.payer_id)}</h4>
+                  </div>
+                  <div className={styles.paymentDesktopCell}>
+                    <span className={styles.cellLabel}>日付</span>
+                    <p className={styles.date}>{new Date(payment.payment_date).toLocaleDateString('ja-JP')}</p>
+                  </div>
+                  <div className={styles.paymentDesktopCell}>
+                    <span className={styles.cellLabel}>内容</span>
+                    <p className={styles.description}>{payment.description || '—'}</p>
+                  </div>
+                  <div className={styles.paymentDesktopCell}>
                     <span className={styles.cellLabel}>対象</span>
                     <p className={styles.billedMembers}>
                       {payment.allocated_member_ids && payment.allocated_member_ids.length > 0
@@ -643,31 +676,17 @@ export default function PaymentsPage() {
                         : '—'}
                     </p>
                   </div>
-                  <div className={styles.paymentCell}>
+                  <div className={styles.paymentDesktopCell}>
                     <span className={styles.cellLabel}>金額</span>
-                    <span className={styles.amount}>
+                    <span className={styles.amountDesktop}>
                       ¥{(typeof payment.amount === 'number' ? payment.amount : 0).toLocaleString()}
                     </span>
                   </div>
-                  <div className={styles.paymentCell}>
+                  <div className={styles.paymentActionsCell}>
                     <span className={styles.cellLabel}>操作</span>
                     <div className={styles.cardActions}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleStartEdit(payment)}
-                        className={styles.actionButton}
-                      >
-                        編集
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleDeletePayment(payment.id)}
-                        className={styles.actionButton}
-                      >
-                        削除
-                      </Button>
+                      <Button variant="secondary" size="sm" onClick={() => handleStartEdit(payment)} className={styles.actionButton}>編集</Button>
+                      <Button variant="secondary" size="sm" onClick={() => handleDeletePayment(payment.id)} className={styles.actionButton}>削除</Button>
                     </div>
                   </div>
                 </div>
