@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import styles from './TripNav.module.css';
 
 const NAV_ITEMS = [
+  { label: '🏡 TOP', href: () => `/` },
   { label: '🏠 概要', href: (tripId: string) => `/trips/${tripId}` },
   { label: '📅 スケジュール', href: (tripId: string) => `/trips/${tripId}/schedule` },
   { label: '👥 メンバー', href: (tripId: string) => `/trips/${tripId}/members` },
