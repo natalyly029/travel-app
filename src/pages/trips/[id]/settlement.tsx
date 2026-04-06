@@ -20,6 +20,13 @@ export default function SettlementPage() {
   const [totalAmount, setTotalAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  const memberNameMap = useMemo(
+    () => new Map(members.map((member) => [member.id, member.name])),
+    [members]
+  );
+  const isSettled = settlements.length === 0;
+  const getMemberName = (memberId: string) => memberNameMap.get(memberId) || memberId;
+
   useEffect(() => {
     if (!id) return;
 
@@ -63,10 +70,6 @@ export default function SettlementPage() {
       </div>
     );
   }
-
-  const isSettled = settlements.length === 0;
-  const memberNameMap = useMemo(() => new Map(members.map((member) => [member.id, member.name])), [members]);
-  const getMemberName = (memberId: string) => memberNameMap.get(memberId) || memberId;
 
   return (
     <div className={styles.container}>
