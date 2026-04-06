@@ -81,7 +81,8 @@
 }
 
 .input,
-.textarea {
+.textarea,
+.daySelect {
   padding: 10px 12px;
   border: 2px solid var(--color-gray-medium);
   border-radius: 12px;
@@ -93,6 +94,11 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.daySelect {
+  min-width: 110px;
+  background: white;
 }
 
 .spotTopRow {

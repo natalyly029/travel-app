@@ -35,6 +35,7 @@ export default function SpotsPage() {
   const [spots, setSpots] = useState<TripSpot[]>([]);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [isAdding, setIsAdding] = useState(false);
+  const [scheduleTargetDayBySpot, setScheduleTargetDayBySpot] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -141,9 +142,11 @@ export default function SpotsPage() {
   };
 
   const handleAddToSchedule = async (spot: TripSpot) => {
-    const firstDayId = days[0]?.id;
-    if (!firstDayId) {
-      alert('先に旅程日を作成してください');
+    const selectedDayId = scheduleTargetDayBySpot[spot.id] || days[0]?.id;
+    const selectedDay = days.find((day) => day.id === selectedDayId);
+
+    if (!selectedDayId || !selectedDay) {
+      alert('追加先の日程を選択してください');
       return;
     }
 
@@ -152,7 +155,7 @@ export default function SpotsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          day_id: firstDayId,
+          day_id: selectedDayId,
           type: 'activity',
           title: spot.name,
           location: spot.area || '',
@@ -161,7 +164,7 @@ export default function SpotsPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to add schedule item');
-      alert('Day 1 の予定に追加しました');
+      alert(`Day ${selectedDay.day_number} の予定に追加しました`);
     } catch {
       alert('予定への追加に失敗しました');
     }
@@ -256,6 +259,17 @@ export default function SpotsPage() {
                     <p className={styles.spotMeta}>{spot.area || 'エリア未設定'}</p>
                   </div>
                   <div className={styles.actionGroup}>
+                    <select
+                      className={styles.daySelect}
+                      value={scheduleTargetDayBySpot[spot.id] || days[0]?.id || ''}
+                      onChange={(e) => setScheduleTargetDayBySpot((current) => ({ ...current, [spot.id]: e.target.value }))}
+                    >
+                      {days.map((day) => (
+                        <option key={day.id} value={day.id}>
+                          Day {day.day_number}
+                        </option>
+                      ))}
+                    </select>
                     <Button variant="secondary" size="sm" onClick={() => handleAddToSchedule(spot)}>予定に追加</Button>
                     <Button variant="secondary" size="sm" onClick={() => handleDeleteSpot(spot.id)}>削除</Button>
                   </div>
