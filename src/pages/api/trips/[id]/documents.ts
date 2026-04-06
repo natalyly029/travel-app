@@ -7,14 +7,6 @@ type ResponseData = {
   error?: string;
 };
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '12mb',
-    },
-  },
-};
-
 const DOCUMENT_BUCKET = 'trip-documents';
 const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
@@ -83,41 +75,21 @@ async function handleGetDocuments(tripId: string, res: NextApiResponse<ResponseD
 }
 
 async function handleCreateDocument(tripId: string, req: NextApiRequest, res: NextApiResponse<ResponseData>) {
-  const { title, fileBase64, fileName, fileMimeType } = req.body;
+  const { title, filePath, fileName, fileMimeType, fileSize } = req.body;
 
-  if (!title || !fileBase64 || !fileName || !fileMimeType) {
-    return res.status(400).json({ error: 'Missing required fields: title, fileBase64, fileName, fileMimeType' });
-  }
-
-  if (!supabaseServer) {
-    return res.status(500).json({ error: 'Supabase server client is not configured' });
+  if (!title || !filePath || !fileName || !fileMimeType) {
+    return res.status(400).json({ error: 'Missing required fields: title, filePath, fileName, fileMimeType' });
   }
 
   if (!ALLOWED_MIME_TYPES.includes(fileMimeType)) {
     return res.status(400).json({ error: 'Unsupported file type' });
   }
 
+  if (typeof fileSize === 'number' && fileSize > MAX_DOCUMENT_SIZE_BYTES) {
+    return res.status(400).json({ error: 'File must be 10MB or smaller' });
+  }
+
   try {
-    const buffer = Buffer.from(fileBase64, 'base64');
-
-    if (buffer.byteLength > MAX_DOCUMENT_SIZE_BYTES) {
-      return res.status(400).json({ error: 'File must be 10MB or smaller' });
-    }
-
-    const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filePath = `${tripId}/${Date.now()}-${safeFileName}`;
-
-    const { error: uploadError } = await supabaseServer.storage
-      .from(DOCUMENT_BUCKET)
-      .upload(filePath, buffer, {
-        contentType: fileMimeType,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      return res.status(500).json({ error: uploadError.message });
-    }
-
     const { data, error } = await supabase
       .from('trip_documents')
       .insert({
@@ -125,7 +97,7 @@ async function handleCreateDocument(tripId: string, req: NextApiRequest, res: Ne
         title,
         file_path: filePath,
         file_name: fileName,
-        file_size: buffer.byteLength,
+        file_size: fileSize || null,
         file_mime_type: fileMimeType,
       })
       .select();
@@ -137,7 +109,7 @@ async function handleCreateDocument(tripId: string, req: NextApiRequest, res: Ne
     res.status(201).json({ data: enrichDocumentsWithUrl((data || []) as TripDocument[]) });
   } catch (err) {
     console.error('Create document error:', err);
-    res.status(500).json({ error: 'Failed to upload document' });
+    res.status(500).json({ error: 'Failed to register document' });
   }
 }
 

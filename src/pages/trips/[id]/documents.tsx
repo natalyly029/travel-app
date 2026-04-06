@@ -6,20 +6,7 @@ import { Trip, TripDocument } from '@/types';
 import styles from '@/styles/Documents.module.css';
 
 const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
-
-async function fileToBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== 'string') return reject(new Error('Failed to read file'));
-      const [, base64 = ''] = result.split(',');
-      resolve(base64);
-    };
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
-}
+const DOCUMENT_BUCKET = 'trip-documents';
 
 async function parseApiResponse(response: Response) {
   const text = await response.text();
@@ -80,15 +67,30 @@ export default function DocumentsPage() {
     }
 
     try {
-      const fileBase64 = await fileToBase64(file);
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${id}/${Date.now()}-${safeFileName}`;
+
+      const { supabase } = await import('@/lib/supabase');
+      const { error: uploadError } = await supabase.storage
+        .from(DOCUMENT_BUCKET)
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
       const response = await fetch(`/api/trips/${id}/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          fileBase64,
+          filePath,
           fileName: file.name,
           fileMimeType: file.type,
+          fileSize: file.size,
         }),
       });
       const result = await parseApiResponse(response);
