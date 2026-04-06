@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button, Card } from '@/components';
-import { Settlement, Member, Payment } from '@/types';
+import { Settlement, Member } from '@/types';
 import styles from '@/styles/Settlement.module.css';
 
 interface MemberBalance {
@@ -17,8 +17,7 @@ export default function SettlementPage() {
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [memberBalances, setMemberBalances] = useState<Record<string, MemberBalance>>({});
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [activeTab, setActiveTab] = useState<'bulk' | 'individual'>('bulk');
+  const [isUpdatingSettlement, setIsUpdatingSettlement] = useState<string | null>(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,21 +27,20 @@ export default function SettlementPage() {
   );
   const isSettled = settlements.length === 0;
   const getMemberName = (memberId: string) => memberNameMap.get(memberId) || memberId;
+  const settlementKey = (fromMemberId: string, toMemberId: string) => `${fromMemberId}:${toMemberId}`;
 
   useEffect(() => {
     if (!id) return;
 
     const fetchSettlement = async () => {
       try {
-        const [settlementResponse, tripResponse, paymentsResponse] = await Promise.all([
+        const [settlementResponse, tripResponse] = await Promise.all([
           fetch(`/api/trips/${id}/settlement`),
           fetch(`/api/trips/${id}`),
-          fetch(`/api/trips/${id}/payments`),
         ]);
 
         const result = await settlementResponse.json();
         const tripResult = await tripResponse.json();
-        const paymentsResult = await paymentsResponse.json();
 
         if (!settlementResponse.ok) {
           throw new Error(result.error || 'Failed to calculate settlement');
@@ -56,7 +54,6 @@ export default function SettlementPage() {
         setMemberBalances(result.data?.memberBalances || {});
         setTotalAmount(result.data?.totalAmount || 0);
         setMembers(tripResult.data?.members || []);
-        setPayments(paymentsResult.data || []);
       } catch (err) {
         // Settlement calculation error - show settled state
         console.error('Settlement error:', err);
@@ -68,75 +65,31 @@ export default function SettlementPage() {
     fetchSettlement();
   }, [id]);
 
-  const refreshSettlementData = async () => {
-    const settlementResponse = await fetch(`/api/trips/${id}/settlement`);
-    const settlementResult = await settlementResponse.json();
-    if (settlementResponse.ok) {
-      setSettlements(settlementResult.data?.settlements || []);
-      setMemberBalances(settlementResult.data?.memberBalances || {});
-      setTotalAmount(settlementResult.data?.totalAmount || 0);
-    }
-  };
+  const handleMarkBulkSettlementComplete = async (settlement: Settlement) => {
+    const key = settlementKey(settlement.from_member_id, settlement.to_member_id);
+    setIsUpdatingSettlement(key);
 
-  const handleToggleAllocationSettled = async (paymentId: string, memberId: string, isSettled: boolean) => {
     try {
-      const response = await fetch(`/api/trips/${id}/payments`, {
+      const response = await fetch(`/api/trips/${id}/settlement`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, memberId, isSettled }),
+        body: JSON.stringify({
+          fromMemberId: settlement.from_member_id,
+          toMemberId: settlement.to_member_id,
+          amount: settlement.amount,
+        }),
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to update settlement status');
+      if (!response.ok) throw new Error(result.error || 'Failed to complete settlement');
 
-      setPayments((current) =>
-        current.map((payment) => (payment.id === paymentId ? result.data[0] : payment))
-      );
-
-      await refreshSettlementData();
-    } catch (err) {
-      alert('清算ステータスの更新に失敗しました');
-    }
-  };
-
-  const handleMarkBulkSettlementComplete = async (fromMemberId: string, toMemberId: string) => {
-    const targetAllocations = payments.flatMap((payment) =>
-      payment.payer_id !== toMemberId
-        ? []
-        : (payment.allocation_statuses || [])
-            .filter((allocation) => allocation.member_id === fromMemberId && !allocation.is_settled)
-            .map((allocation) => ({ paymentId: payment.id, memberId: allocation.member_id }))
-    );
-
-    const targetSummary = payments
-      .filter((payment) => payment.payer_id === toMemberId)
-      .flatMap((payment) => (payment.allocation_statuses || []).filter((allocation) => allocation.member_id === fromMemberId));
-
-    if (targetAllocations.length === 0) {
-      const hasAnyRelation = targetSummary.length > 0;
-      alert(hasAnyRelation ? 'このメンバー間の未清算項目はありません' : 'このメンバー間に対応する個別清算項目がありません');
-      return;
-    }
-
-    try {
-      for (const allocation of targetAllocations) {
-        const response = await fetch(`/api/trips/${id}/payments`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            paymentId: allocation.paymentId,
-            memberId: allocation.memberId,
-            isSettled: true,
-          }),
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || 'Failed to mark settlement complete');
-        setPayments((current) => current.map((payment) => (payment.id === allocation.paymentId ? result.data[0] : payment)));
-      }
-
-      await refreshSettlementData();
+      setSettlements(result.data?.settlements || []);
+      setMemberBalances(result.data?.memberBalances || {});
+      setTotalAmount(result.data?.totalAmount || 0);
     } catch (err) {
       alert('一括清算ステータスの更新に失敗しました');
+    } finally {
+      setIsUpdatingSettlement(null);
     }
   };
 
@@ -157,11 +110,6 @@ export default function SettlementPage() {
         <div />
       </div>
 
-      <div className={styles.tabBar}>
-        <button type="button" className={`${styles.tabButton} ${activeTab === 'bulk' ? styles.tabButtonActive : ''}`} onClick={() => setActiveTab('bulk')}>一括清算</button>
-        <button type="button" className={`${styles.tabButton} ${activeTab === 'individual' ? styles.tabButtonActive : ''}`} onClick={() => setActiveTab('individual')}>個別清算</button>
-      </div>
-
       {/* Settled/Unsettled Status */}
       <Card className={styles.statusCard}>
         {isSettled ? (
@@ -180,7 +128,7 @@ export default function SettlementPage() {
       </Card>
 
       {/* Settlements List */}
-      {activeTab === 'bulk' && !isSettled && (
+      {!isSettled && (
         <section className={styles.settlementsSection}>
           <div className={styles.sectionTitleRow}>
             <h2>送金内容</h2>
@@ -235,9 +183,10 @@ export default function SettlementPage() {
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => handleMarkBulkSettlementComplete(settlement.from_member_id, settlement.to_member_id)}
+                        onClick={() => handleMarkBulkSettlementComplete(settlement)}
+                        disabled={isUpdatingSettlement === settlementKey(settlement.from_member_id, settlement.to_member_id)}
                       >
-                        清算済みにする
+                        {isUpdatingSettlement === settlementKey(settlement.from_member_id, settlement.to_member_id) ? '更新中...' : '清算済みにする'}
                       </Button>
                     </div>
                   </div>
@@ -248,43 +197,6 @@ export default function SettlementPage() {
         </section>
       )}
 
-      {activeTab === 'individual' && (
-        <section className={styles.individualSection}>
-          <div className={styles.sectionTitleRow}>
-            <h2>個別清算</h2>
-            <span className={styles.sectionMeta}>{payments.length}件</span>
-          </div>
-          <div className={styles.individualList}>
-            {payments.map((payment) => (
-              <Card key={payment.id} className={styles.individualCard}>
-                <div className={styles.individualHeader}>
-                  <div>
-                    <h3>{payment.description || '支払い'}</h3>
-                    <p className={styles.individualMeta}>
-                      立替: {getMemberName(payment.payer_id)} / ¥{payment.amount.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <div className={styles.individualAllocations}>
-                  {payment.allocation_statuses?.map((allocation) => (
-                    <label key={`${payment.id}-${allocation.member_id}`} className={styles.individualAllocationItem}>
-                      <input
-                        type="checkbox"
-                        checked={allocation.is_settled}
-                        onChange={(e) => handleToggleAllocationSettled(payment.id, allocation.member_id, e.target.checked)}
-                      />
-                      <span>
-                        {getMemberName(allocation.member_id)}
-                        {allocation.is_settled ? '（清算済み）' : '（未清算）'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Member Balances */}
       <section className={styles.balancesSection}>

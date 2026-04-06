@@ -87,6 +87,8 @@ export interface Settlement {
   to_name: string;
   amount: number;
   currency: string;
+  is_completed?: boolean;
+  completed_at?: string | null;
 }
 
 export interface TripDocument {

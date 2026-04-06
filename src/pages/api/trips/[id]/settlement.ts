@@ -14,8 +14,14 @@ type ResponseData = {
 type PaymentAllocationRow = {
   payment_id: string;
   member_id: string;
-  is_settled?: boolean;
-  settled_at?: string | null;
+};
+
+type SettlementTransferRow = {
+  from_member_id: string;
+  to_member_id: string;
+  amount: number;
+  is_completed?: boolean;
+  completed_at?: string | null;
 };
 
 export default async function handler(
@@ -30,6 +36,10 @@ export default async function handler(
 
   if (req.method === 'GET') {
     return handleCalculateSettlement(id, res);
+  }
+
+  if (req.method === 'PUT') {
+    return handleCompleteSettlement(id, req, res);
   }
 
   res.status(405).json({ error: 'Method not allowed' });
@@ -62,7 +72,7 @@ async function handleCalculateSettlement(
     if (paymentIds.length > 0) {
       const { data: allocationData, error: allocationError } = await supabase
         .from('payment_allocations')
-        .select('payment_id, member_id, is_settled, settled_at')
+        .select('payment_id, member_id')
         .in('payment_id', paymentIds);
 
       if (allocationError) {
@@ -72,10 +82,20 @@ async function handleCalculateSettlement(
       allocations = (allocationData || []) as PaymentAllocationRow[];
     }
 
+    const { data: transferData, error: transferError } = await supabase
+      .from('settlement_transfers')
+      .select('from_member_id, to_member_id, amount, is_completed, completed_at')
+      .eq('trip_id', tripId);
+
+    if (transferError) {
+      return res.status(500).json({ error: 'Failed to fetch settlement transfers' });
+    }
+
     const settlement = calculateSettlement(
       members as Member[],
       payments as Payment[],
-      allocations
+      allocations,
+      (transferData || []) as SettlementTransferRow[]
     );
 
     res.status(200).json({ data: settlement });
@@ -88,7 +108,8 @@ async function handleCalculateSettlement(
 function calculateSettlement(
   members: Member[],
   payments: Payment[],
-  allocations: PaymentAllocationRow[]
+  allocations: PaymentAllocationRow[],
+  transfers: SettlementTransferRow[]
 ) {
   const paidByMember: Record<string, number> = {};
   const fairShareByMember: Record<string, number> = {};
@@ -111,7 +132,7 @@ function calculateSettlement(
     paidByMember[payment.payer_id] = (paidByMember[payment.payer_id] || 0) + amount;
     totalAmount += amount;
 
-    const billedMembers = (allocationMap.get(payment.id) || []).filter((allocation) => !allocation.is_settled);
+    const billedMembers = allocationMap.get(payment.id) || [];
     const shareTargets = billedMembers.length > 0 ? billedMembers.map((allocation) => allocation.member_id) : members.map((member) => member.id);
     const sharePerMember = shareTargets.length > 0 ? amount / shareTargets.length : 0;
 
@@ -124,6 +145,12 @@ function calculateSettlement(
   members.forEach((member) => {
     balances[member.id] = (paidByMember[member.id] || 0) - (fairShareByMember[member.id] || 0);
   });
+
+  const completedTransferMap = new Map(
+    transfers
+      .filter((transfer) => transfer.is_completed)
+      .map((transfer) => [`${transfer.from_member_id}:${transfer.to_member_id}`, transfer])
+  );
 
   const settlements: Settlement[] = [];
   const owers = members
@@ -150,14 +177,19 @@ function calculateSettlement(
       const owedby = owedbys[0];
       const settleAmount = Math.min(remaining, owedby.amount);
 
-      settlements.push({
-        from_member_id: ower.id,
-        from_name: ower.name,
-        to_member_id: owedby.id,
-        to_name: owedby.name,
-        amount: settleAmount,
-        currency: 'JPY',
-      });
+      const transferKey = `${ower.id}:${owedby.id}`;
+      const completedTransfer = completedTransferMap.get(transferKey);
+
+      if (!completedTransfer || completedTransfer.amount !== settleAmount) {
+        settlements.push({
+          from_member_id: ower.id,
+          from_name: ower.name,
+          to_member_id: owedby.id,
+          to_name: owedby.name,
+          amount: settleAmount,
+          currency: 'JPY',
+        });
+      }
 
       remaining -= settleAmount;
       owedby.amount -= settleAmount;
@@ -182,4 +214,40 @@ function calculateSettlement(
     memberBalances,
     totalAmount,
   };
+}
+
+async function handleCompleteSettlement(
+  tripId: string,
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
+  const { fromMemberId, toMemberId, amount } = req.body;
+
+  if (!fromMemberId || !toMemberId || typeof amount !== 'number') {
+    return res.status(400).json({ error: 'Missing required fields: fromMemberId, toMemberId, amount' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('settlement_transfers')
+      .upsert({
+        trip_id: tripId,
+        from_member_id: fromMemberId,
+        to_member_id: toMemberId,
+        amount,
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+      }, {
+        onConflict: 'trip_id,from_member_id,to_member_id'
+      });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return handleCalculateSettlement(tripId, res);
+  } catch (err) {
+    console.error('Settlement completion error:', err);
+    return res.status(500).json({ error: 'Failed to complete settlement' });
+  }
 }
