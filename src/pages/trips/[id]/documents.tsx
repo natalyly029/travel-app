@@ -79,7 +79,7 @@ export default function DocumentsPage() {
         });
 
       if (uploadError) {
-        throw new Error(uploadError.message);
+        throw new Error(`Storage upload error: ${uploadError.message}`);
       }
 
       const response = await fetch(`/api/trips/${id}/documents`, {

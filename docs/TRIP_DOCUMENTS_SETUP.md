@@ -37,6 +37,31 @@ create table if not exists trip_documents (
 );
 ```
 
+### 3. Storage RLS policy
+
+クライアントから直接 `trip-documents` bucket に upload するため、Storage 側の policy が必要です。
+
+```sql
+create policy "Allow public uploads to trip-documents"
+on storage.objects
+for insert
+with check (bucket_id = 'trip-documents');
+
+create policy "Allow public reads from trip-documents"
+on storage.objects
+for select
+using (bucket_id = 'trip-documents');
+
+create policy "Allow public deletes from trip-documents"
+on storage.objects
+for delete
+using (bucket_id = 'trip-documents');
+```
+
+※ Storage RLS が有効な環境で policy が不足していると、
+`new row violates row-level security policy`
+になります。
+
 ## 実装仕様
 
 - 旅ごとに資料をアップロード可能
