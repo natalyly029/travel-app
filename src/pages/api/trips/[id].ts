@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase';
 import { Trip, Day, Event, Member } from '@/types';
+import { getPreferredDayId } from '@/lib/tripUtils';
 
 type ResponseData = {
   data?: {
@@ -78,7 +79,8 @@ async function handleGetTrip(
 
     const memberCount = (membersResult.data || []).length;
     const paymentCount = paymentsCountResult.count || 0;
-    const daysById = new Map(((days || []) as Day[]).map((day) => [day.id, day]));
+    const normalizedDays = (days || []) as Day[];
+    const daysById = new Map(normalizedDays.map((day) => [day.id, day]));
     const events = ((eventsResult.data || []) as Event[]).sort((a, b) => {
       const aDay = daysById.get(a.day_id)?.date || '';
       const bDay = daysById.get(b.day_id)?.date || '';
@@ -88,6 +90,15 @@ async function handleGetTrip(
     });
 
     const now = new Date();
+    const preferredDayId = getPreferredDayId(normalizedDays);
+    const preferredDayTimedEvents = events.filter((event) => {
+      if (event.day_id !== preferredDayId || !event.start_time) return false;
+      const dayDate = daysById.get(event.day_id)?.date;
+      if (!dayDate) return false;
+      const eventDateTime = new Date(`${dayDate}T${event.start_time}:00`);
+      return eventDateTime.getTime() >= now.getTime();
+    });
+
     const upcomingTimedEvents = events.filter((event) => {
       if (!event.start_time) return false;
       const dayDate = daysById.get(event.day_id)?.date;
@@ -96,7 +107,7 @@ async function handleGetTrip(
       return eventDateTime.getTime() >= now.getTime();
     });
 
-    const nextEvent = upcomingTimedEvents[0] || events.find((event) => event.start_time) || events[0] || null;
+    const nextEvent = preferredDayTimedEvents[0] || upcomingTimedEvents[0] || events.find((event) => event.start_time) || events[0] || null;
 
     res.status(200).json({
       data: {

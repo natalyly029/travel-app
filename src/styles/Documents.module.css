@@ -62,7 +62,7 @@
 .sectionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: end;
+  align-items: flex-end;
   gap: 12px;
   margin-bottom: 10px;
 }
@@ -156,4 +156,49 @@
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+.documentCardPinned {
+  border: 1px solid rgba(236, 72, 153, 0.22);
+  box-shadow: 0 12px 24px rgba(236, 72, 153, 0.08);
+}
+
+.documentTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pinnedBadge,
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.pinnedBadge {
+  background: rgba(236, 72, 153, 0.14);
+  color: #be185d;
+}
+
+.categoryBadge {
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--color-purple);
+}
+
+.inlineSelect {
+  padding: 8px 10px;
+  border: 1px solid var(--color-gray-medium);
+  border-radius: 9999px;
+}
+
+.pinOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }

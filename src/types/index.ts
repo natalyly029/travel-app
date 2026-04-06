@@ -97,10 +97,21 @@ export interface Settlement {
   history?: SettlementHistoryItem[];
 }
 
+export interface CompletedSettlementTransfer {
+  from_member_id: string;
+  from_name: string;
+  to_member_id: string;
+  to_name: string;
+  amount: number;
+  completed_at?: string | null;
+}
+
 export interface TripDocument {
   id: string;
   trip_id: string;
   title: string;
+  category?: 'flight' | 'hotel' | 'booking' | 'insurance' | 'other' | null;
+  is_pinned?: boolean;
   file_path: string;
   file_name: string;
   file_size?: number | null;

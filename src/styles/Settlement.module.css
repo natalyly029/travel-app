@@ -346,3 +346,28 @@
     padding: 14px;
   }
 }
+
+.historyCard {
+  padding: 14px;
+}
+
+.historyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.historyMeta {
+  margin: 4px 0 0;
+  font-size: 0.84rem;
+  color: var(--color-gray-dark);
+}
+
+.emptyState {
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.6);
+  color: var(--color-gray-dark);
+  text-align: center;
+}

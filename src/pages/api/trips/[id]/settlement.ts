@@ -1,10 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase';
-import { Member, Payment, Settlement } from '@/types';
+import { CompletedSettlementTransfer, Member, Payment, Settlement } from '@/types';
 
 type ResponseData = {
   data?: {
     settlements: Settlement[];
+    completedSettlements: CompletedSettlementTransfer[];
     memberBalances: Record<string, { paid: number; fairShare: number; balance: number }>;
     totalAmount: number;
   };
@@ -34,13 +35,9 @@ export default async function handler(
     return res.status(400).json({ error: 'Invalid trip ID' });
   }
 
-  if (req.method === 'GET') {
-    return handleCalculateSettlement(id, res);
-  }
-
-  if (req.method === 'PUT') {
-    return handleCompleteSettlement(id, req, res);
-  }
+  if (req.method === 'GET') return handleCalculateSettlement(id, res);
+  if (req.method === 'PUT') return handleCompleteSettlement(id, req, res);
+  if (req.method === 'PATCH') return handleUndoSettlement(id, req, res);
 
   res.status(405).json({ error: 'Method not allowed' });
 }
@@ -58,13 +55,8 @@ async function handleCalculateSettlement(
     const { data: members, error: membersError } = membersResult;
     const { data: payments, error: paymentsError } = paymentsResult;
 
-    if (membersError || !members) {
-      return res.status(500).json({ error: 'Failed to fetch members' });
-    }
-
-    if (paymentsError || !payments) {
-      return res.status(500).json({ error: 'Failed to fetch payments' });
-    }
+    if (membersError || !members) return res.status(500).json({ error: 'Failed to fetch members' });
+    if (paymentsError || !payments) return res.status(500).json({ error: 'Failed to fetch payments' });
 
     const paymentIds = payments.map((payment) => payment.id);
     let allocations: PaymentAllocationRow[] = [];
@@ -75,10 +67,7 @@ async function handleCalculateSettlement(
         .select('payment_id, member_id')
         .in('payment_id', paymentIds);
 
-      if (allocationError) {
-        return res.status(500).json({ error: 'Failed to fetch payment allocations' });
-      }
-
+      if (allocationError) return res.status(500).json({ error: 'Failed to fetch payment allocations' });
       allocations = (allocationData || []) as PaymentAllocationRow[];
     }
 
@@ -87,9 +76,7 @@ async function handleCalculateSettlement(
       .select('from_member_id, to_member_id, amount, is_completed, completed_at')
       .eq('trip_id', tripId);
 
-    if (transferError) {
-      return res.status(500).json({ error: 'Failed to fetch settlement transfers' });
-    }
+    if (transferError) return res.status(500).json({ error: 'Failed to fetch settlement transfers' });
 
     const settlement = calculateSettlement(
       members as Member[],
@@ -135,7 +122,6 @@ function calculateSettlement(
     const billedMembers = allocationMap.get(payment.id) || [];
     const shareTargets = billedMembers.length > 0 ? billedMembers.map((allocation) => allocation.member_id) : members.map((member) => member.id);
     const sharePerMember = shareTargets.length > 0 ? amount / shareTargets.length : 0;
-
     shareTargets.forEach((memberId) => {
       fairShareByMember[memberId] = (fairShareByMember[memberId] || 0) + sharePerMember;
     });
@@ -152,10 +138,6 @@ function calculateSettlement(
     balances[transfer.to_member_id] = (balances[transfer.to_member_id] || 0) - transfer.amount;
   });
 
-  const completedTransferMap = new Map(
-    completedTransfers.map((transfer) => [`${transfer.from_member_id}:${transfer.to_member_id}:${transfer.amount}`, transfer])
-  );
-
   const completedTransferHistoryMap = new Map<string, SettlementTransferRow[]>();
   completedTransfers.forEach((transfer) => {
     const key = `${transfer.from_member_id}:${transfer.to_member_id}`;
@@ -165,21 +147,19 @@ function calculateSettlement(
   });
 
   const settlements: Settlement[] = [];
-  const owers = members
-    .filter((m) => balances[m.id] < -0.01)
-    .map((m) => ({
-      id: m.id,
-      name: m.name,
-      amount: Math.abs(balances[m.id]),
-    }));
+  const completedSettlements: CompletedSettlementTransfer[] = completedTransfers
+    .map((transfer) => ({
+      from_member_id: transfer.from_member_id,
+      from_name: members.find((member) => member.id === transfer.from_member_id)?.name || transfer.from_member_id,
+      to_member_id: transfer.to_member_id,
+      to_name: members.find((member) => member.id === transfer.to_member_id)?.name || transfer.to_member_id,
+      amount: transfer.amount,
+      completed_at: transfer.completed_at || null,
+    }))
+    .sort((a, b) => (b.completed_at || '').localeCompare(a.completed_at || ''));
 
-  const owedbys = members
-    .filter((m) => balances[m.id] > 0.01)
-    .map((m) => ({
-      id: m.id,
-      name: m.name,
-      amount: balances[m.id],
-    }));
+  const owers = members.filter((m) => balances[m.id] < -0.01).map((m) => ({ id: m.id, name: m.name, amount: Math.abs(balances[m.id]) }));
+  const owedbys = members.filter((m) => balances[m.id] > 0.01).map((m) => ({ id: m.id, name: m.name, amount: balances[m.id] }));
 
   for (let i = 0; i < owers.length && owedbys.length > 0; i++) {
     const ower = owers[i];
@@ -188,33 +168,25 @@ function calculateSettlement(
     while (remaining > 0.01 && owedbys.length > 0) {
       const owedby = owedbys[0];
       const settleAmount = Math.min(remaining, owedby.amount);
-
-      const transferKey = `${ower.id}:${owedby.id}:${settleAmount}`;
-      const completedTransfer = completedTransferMap.get(transferKey);
       const historyKey = `${ower.id}:${owedby.id}`;
       const transferHistory = (completedTransferHistoryMap.get(historyKey) || []).map((transfer) => ({
         amount: transfer.amount,
         completed_at: transfer.completed_at || null,
       }));
 
-      if (!completedTransfer) {
-        settlements.push({
-          from_member_id: ower.id,
-          from_name: ower.name,
-          to_member_id: owedby.id,
-          to_name: owedby.name,
-          amount: settleAmount,
-          currency: 'JPY',
-          history: transferHistory,
-        });
-      }
+      settlements.push({
+        from_member_id: ower.id,
+        from_name: ower.name,
+        to_member_id: owedby.id,
+        to_name: owedby.name,
+        amount: settleAmount,
+        currency: 'JPY',
+        history: transferHistory,
+      });
 
       remaining -= settleAmount;
       owedby.amount -= settleAmount;
-
-      if (owedby.amount < 0.01) {
-        owedbys.shift();
-      }
+      if (owedby.amount < 0.01) owedbys.shift();
     }
   }
 
@@ -227,11 +199,7 @@ function calculateSettlement(
     };
   });
 
-  return {
-    settlements,
-    memberBalances,
-    totalAmount,
-  };
+  return { settlements, completedSettlements, memberBalances, totalAmount };
 }
 
 async function handleCompleteSettlement(
@@ -240,32 +208,53 @@ async function handleCompleteSettlement(
   res: NextApiResponse<ResponseData>
 ) {
   const { fromMemberId, toMemberId, amount } = req.body;
-
   if (!fromMemberId || !toMemberId || typeof amount !== 'number') {
     return res.status(400).json({ error: 'Missing required fields: fromMemberId, toMemberId, amount' });
   }
 
   try {
-    const { error } = await supabase
-      .from('settlement_transfers')
-      .upsert({
-        trip_id: tripId,
-        from_member_id: fromMemberId,
-        to_member_id: toMemberId,
-        amount,
-        is_completed: true,
-        completed_at: new Date().toISOString(),
-      }, {
-        onConflict: 'trip_id,from_member_id,to_member_id'
-      });
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-
+    const { error } = await supabase.from('settlement_transfers').insert({
+      trip_id: tripId,
+      from_member_id: fromMemberId,
+      to_member_id: toMemberId,
+      amount,
+      is_completed: true,
+      completed_at: new Date().toISOString(),
+    });
+    if (error) return res.status(500).json({ error: error.message });
     return handleCalculateSettlement(tripId, res);
   } catch (err) {
     console.error('Settlement completion error:', err);
     return res.status(500).json({ error: 'Failed to complete settlement' });
+  }
+}
+
+async function handleUndoSettlement(
+  tripId: string,
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
+  const { fromMemberId, toMemberId, amount, completedAt } = req.body;
+  if (!fromMemberId || !toMemberId || typeof amount !== 'number') {
+    return res.status(400).json({ error: 'Missing required fields: fromMemberId, toMemberId, amount' });
+  }
+
+  try {
+    let query = supabase
+      .from('settlement_transfers')
+      .delete()
+      .eq('trip_id', tripId)
+      .eq('from_member_id', fromMemberId)
+      .eq('to_member_id', toMemberId)
+      .eq('amount', amount);
+
+    if (completedAt) query = query.eq('completed_at', completedAt);
+
+    const { error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+    return handleCalculateSettlement(tripId, res);
+  } catch (err) {
+    console.error('Settlement undo error:', err);
+    return res.status(500).json({ error: 'Failed to undo settlement' });
   }
 }

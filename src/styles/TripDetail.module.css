@@ -378,3 +378,18 @@
     font-size: 0.8rem;
   }
 }
+
+.dayCardToday { border: 1px solid rgba(167, 139, 250, 0.28); }
+.dayCardFocus { box-shadow: 0 10px 20px rgba(236, 72, 153, 0.12); }
+.todayChip, .dayFocusLabel {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--color-purple);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.dayFocusLabel { margin-bottom: 8px; }
