@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Button, Card } from '@/components';
+import { Button, Card, TripNav } from '@/components';
 import { Trip, Day, Event } from '@/types';
+import {
+  formatDayDate,
+  getPreferredDayId,
+  getTimeUntilLabel,
+  getUpcomingEventId,
+  isPastEvent,
+  isTodayDate,
+  sortEventsChronologically,
+} from '@/lib/tripUtils';
 import styles from '@/styles/Schedule.module.css';
 
 const EVENT_TYPES = [
@@ -14,6 +23,14 @@ const EVENT_TYPES = [
   { id: 'note', label: '📝 メモ', color: '#e5e7eb' },
 ];
 
+const EMPTY_FORM = {
+  type: 'sightseeing',
+  title: '',
+  start_time: '',
+  location: '',
+  notes: '',
+};
+
 export default function ScheduleEditor() {
   const router = useRouter();
   const { id } = router.query;
@@ -24,13 +41,7 @@ export default function ScheduleEditor() {
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
-  const [formData, setFormData] = useState({
-    type: 'sightseeing',
-    title: '',
-    start_time: '',
-    location: '',
-    notes: '',
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,24 +51,12 @@ export default function ScheduleEditor() {
 
     const fetchData = async () => {
       try {
-        // Fetch trip data
         const tripRes = await fetch(`/api/trips/${id}`);
         const tripData = await tripRes.json();
+        const fetchedDays = (tripData.data.days || []) as Day[];
         setTrip(tripData.data.trip);
-        setDays(tripData.data.days);
-        if (tripData.data.days.length > 0) {
-          const matchedDay = tripData.data.days.find((day: Day) => day.id === requestedDayId);
-          setSelectedDayId(matchedDay ? matchedDay.id : tripData.data.days[0].id);
-        }
-
-        const initialDayId = tripData.data.days.find((day: Day) => day.id === requestedDayId)?.id || tripData.data.days[0]?.id;
-        if (initialDayId) {
-          const eventsRes = await fetch(`/api/trips/${id}/schedule?dayId=${initialDayId}`);
-          const eventsData = await eventsRes.json();
-          setEvents(eventsData.data || []);
-        } else {
-          setEvents([]);
-        }
+        setDays(fetchedDays);
+        setSelectedDayId(getPreferredDayId(fetchedDays, requestedDayId));
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -85,6 +84,22 @@ export default function ScheduleEditor() {
     fetchDayEvents();
   }, [id, selectedDayId]);
 
+  const selectedDay = days.find((d) => d.id === selectedDayId);
+  const dayEvents = useMemo(() => sortEventsChronologically(events), [events]);
+  const upcomingEventId = useMemo(() => getUpcomingEventId(selectedDay, dayEvents), [selectedDay, dayEvents]);
+
+  useEffect(() => {
+    if (!dayEvents.length) {
+      setSelectedEventId('');
+      return;
+    }
+
+    setSelectedEventId((current) => {
+      if (current && dayEvents.some((event) => event.id === current)) return current;
+      return upcomingEventId || dayEvents[0]?.id || '';
+    });
+  }, [dayEvents, upcomingEventId]);
+
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -110,21 +125,14 @@ export default function ScheduleEditor() {
       if (!response.ok) throw new Error('Failed to add event');
 
       const result = await response.json();
-      setEvents((current) => [...current, ...result.data]);
-      if (result.data?.[0]?.id) {
-        setSelectedEventId(result.data[0].id);
+      const createdEvent = result.data?.[0];
+      setEvents((current) => sortEventsChronologically([...current, ...result.data]));
+      if (createdEvent?.id) {
+        setSelectedEventId(createdEvent.id);
       }
-
-      // Reset form
-      setFormData({
-        type: 'sightseeing',
-        title: '',
-        start_time: '',
-        location: '',
-        notes: '',
-      });
+      setFormData(EMPTY_FORM);
       setIsAddingEvent(false);
-    } catch (err) {
+    } catch {
       alert('イベント追加に失敗しました');
     }
   };
@@ -140,6 +148,8 @@ export default function ScheduleEditor() {
       notes: event.notes || '',
     });
   };
+
+  const selectedEvent = dayEvents.find((event) => event.id === selectedEventId) || dayEvents[0] || null;
 
   const handleUpdateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,18 +176,10 @@ export default function ScheduleEditor() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to update event');
 
-      setEvents((current) =>
-        current.map((event) => (event.id === selectedEvent.id ? result.data[0] : event))
-      );
+      setEvents((current) => sortEventsChronologically(current.map((event) => (event.id === selectedEvent.id ? result.data[0] : event))));
       setIsEditingEvent(false);
-      setFormData({
-        type: 'sightseeing',
-        title: '',
-        start_time: '',
-        location: '',
-        notes: '',
-      });
-    } catch (err) {
+      setFormData(EMPTY_FORM);
+    } catch {
       alert('予定の更新に失敗しました');
     }
   };
@@ -193,14 +195,13 @@ export default function ScheduleEditor() {
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.error || 'Failed to delete event');
       }
 
       setEvents((current) => current.filter((event) => event.id !== eventId));
       setSelectedEventId((current) => (current === eventId ? '' : current));
-    } catch (err) {
+    } catch {
       alert('予定の削除に失敗しました');
     }
   };
@@ -213,52 +214,60 @@ export default function ScheduleEditor() {
     );
   }
 
-  const selectedDay = days.find((d) => d.id === selectedDayId);
-  const dayEvents = selectedDay
-    ? [...events].sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'))
-    : [];
-  const selectedEvent = dayEvents.find((event) => event.id === selectedEventId) || dayEvents[0] || null;
   const timedEventsCount = dayEvents.filter((event) => event.start_time).length;
+  const upcomingEvent = dayEvents.find((event) => event.id === upcomingEventId) || null;
+  const isSelectedDayToday = selectedDay ? isTodayDate(selectedDay.date) : false;
+  const timeUntilUpcoming = getTimeUntilLabel(selectedDay, upcomingEvent);
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <div className={styles.header}>
         <Link href={`/trips/${id}`}>←</Link>
         <h1>{trip?.title}</h1>
         <div style={{ width: '40px' }} />
       </div>
 
-      {/* Day Selector */}
+      <TripNav tripId={typeof id === 'string' ? id : ''} />
+
       <nav className={styles.dayTabs}>
-        {days.map((day) => (
-          <button
-            key={day.id}
-            className={`${styles.dayTab} ${
-              selectedDayId === day.id ? styles.active : ''
-            }`}
-            onClick={() => setSelectedDayId(day.id)}
-          >
-            Day {day.day_number}
-            <span className={styles.date}>
-              {new Date(day.date).toLocaleDateString('ja-JP', {
-                month: 'short',
-                day: 'numeric',
-              })}
-            </span>
-          </button>
-        ))}
+        {days.map((day) => {
+          const isToday = isTodayDate(day.date);
+          return (
+            <button
+              key={day.id}
+              className={`${styles.dayTab} ${selectedDayId === day.id ? styles.active : ''} ${isToday ? styles.todayDayTab : ''}`}
+              onClick={() => setSelectedDayId(day.id)}
+            >
+              Day {day.day_number}
+              {isToday && <span className={styles.todayBadge}>今日</span>}
+              <span className={styles.date}>{formatDayDate(day.date)}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      {/* Schedule Content */}
       <div className={styles.content}>
         <section className={styles.timelineSection}>
           <div className={styles.sectionTitleRow}>
-            <h2>日内タイムライン</h2>
+            <div>
+              <h2>日内タイムライン</h2>
+              {selectedDay && <p className={styles.dayContext}>{formatDayDate(selectedDay.date)}{isSelectedDayToday ? ' ・ 今日' : ''}</p>}
+            </div>
             <span className={styles.sectionMeta}>
               {timedEventsCount > 0 ? `${timedEventsCount}件が時刻指定` : '時刻未設定中心'}
             </span>
           </div>
+
+          {upcomingEvent && (
+            <Card className={styles.upcomingCard}>
+              <div>
+                <p className={styles.upcomingLabel}>{isSelectedDayToday ? '今日いちばん近い予定' : '次に近い予定'}</p>
+                <h3>{upcomingEvent.title}</h3>
+                <p className={styles.upcomingMeta}>{upcomingEvent.start_time || '時間未定'}{upcomingEvent.location ? ` ・ ${upcomingEvent.location}` : ''}</p>
+              </div>
+              {timeUntilUpcoming && <strong className={styles.upcomingCountdown}>{timeUntilUpcoming}</strong>}
+            </Card>
+          )}
 
           {dayEvents.length === 0 ? (
             <p className={styles.emptyState}>予定がありません。追加しましょう！</p>
@@ -267,12 +276,14 @@ export default function ScheduleEditor() {
               {dayEvents.map((event) => {
                 const eventType = EVENT_TYPES.find((t) => t.id === event.type);
                 const isSelected = selectedEvent?.id === event.id;
+                const isUpcoming = upcomingEventId === event.id;
+                const past = isPastEvent(selectedDay, event);
 
                 return (
                   <button
                     key={event.id}
                     type="button"
-                    className={`${styles.timelineItem} ${isSelected ? styles.timelineItemActive : ''}`}
+                    className={`${styles.timelineItem} ${isSelected ? styles.timelineItemActive : ''} ${isUpcoming ? styles.timelineItemUpcoming : ''} ${past ? styles.timelineItemPast : ''}`}
                     onClick={() => setSelectedEventId(event.id)}
                   >
                     <div className={styles.timelineTime}>
@@ -288,7 +299,10 @@ export default function ScheduleEditor() {
                     <div className={styles.timelineContent}>
                       <div className={styles.timelineTopRow}>
                         <h3>{event.title}</h3>
-                        <span className={styles.eventTypeBadge}>{eventType?.label || '予定'}</span>
+                        <div className={styles.timelineBadgeRow}>
+                          {isUpcoming && <span className={styles.upcomingPill}>NEAR</span>}
+                          <span className={styles.eventTypeBadge}>{eventType?.label || '予定'}</span>
+                        </div>
                       </div>
                       <div className={styles.timelineMeta}>
                         <span>{event.location ? `📍 ${event.location}` : '場所未設定'}</span>
@@ -302,13 +316,10 @@ export default function ScheduleEditor() {
           )}
         </section>
 
-        {/* Events List */}
         <section className={styles.eventsSection}>
           <div className={styles.sectionTitleRow}>
             <h2>予定一覧</h2>
-            <span className={styles.sectionMeta}>
-              {dayEvents.length}件 / 時間あり {timedEventsCount}件
-            </span>
+            <span className={styles.sectionMeta}>{dayEvents.length}件 / 時間あり {timedEventsCount}件</span>
           </div>
           {dayEvents.length === 0 ? (
             <p className={styles.emptyState}>予定がありません。追加しましょう！</p>
@@ -322,18 +333,17 @@ export default function ScheduleEditor() {
               </div>
               {dayEvents.map((event) => {
                 const eventType = EVENT_TYPES.find((t) => t.id === event.type);
+                const past = isPastEvent(selectedDay, event);
+                const isUpcoming = upcomingEventId === event.id;
                 return (
                   <button
                     key={event.id}
                     type="button"
-                    className={`${styles.eventCardButton} ${selectedEvent?.id === event.id ? styles.eventCardButtonActive : ''}`}
+                    className={`${styles.eventCardButton} ${selectedEvent?.id === event.id ? styles.eventCardButtonActive : ''} ${past ? styles.eventCardButtonPast : ''}`}
                     onClick={() => setSelectedEventId(event.id)}
                   >
-                    <Card className={styles.eventCard}>
-                      <div
-                        className={styles.eventColor}
-                        style={{ backgroundColor: eventType?.color }}
-                      />
+                    <Card className={`${styles.eventCard} ${isUpcoming ? styles.eventCardUpcoming : ''}`}>
+                      <div className={styles.eventColor} style={{ backgroundColor: eventType?.color }} />
                       <div className={styles.eventRow}>
                         <div className={styles.eventTimeCol}>
                           <span className={styles.cellLabel}>時刻</span>
@@ -342,6 +352,7 @@ export default function ScheduleEditor() {
                         <div className={styles.eventTitleCol}>
                           <span className={styles.cellLabel}>タイトル</span>
                           <h4>{event.title}</h4>
+                          {isUpcoming && <span className={styles.todayHighlight}>次に近い予定</span>}
                         </div>
                         <div className={styles.eventTypeCol}>
                           <span className={styles.cellLabel}>種類</span>
@@ -369,58 +380,25 @@ export default function ScheduleEditor() {
                   <h3>{selectedEvent.title}</h3>
                 </div>
                 <div className={styles.detailActions}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleStartEditEvent(selectedEvent)}
-                    className={styles.deleteEventButton}
-                  >
-                    編集
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleDeleteEvent(selectedEvent.id)}
-                    className={styles.deleteEventButton}
-                  >
-                    削除
-                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => handleStartEditEvent(selectedEvent)} className={styles.deleteEventButton}>編集</Button>
+                  <Button variant="secondary" size="sm" onClick={() => handleDeleteEvent(selectedEvent.id)} className={styles.deleteEventButton}>削除</Button>
                 </div>
               </div>
 
               <div className={styles.detailGrid}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>種類</span>
-                  <p>{EVENT_TYPES.find((type) => type.id === selectedEvent.type)?.label || '予定'}</p>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>時間</span>
-                  <p>{selectedEvent.start_time || '未設定'}</p>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>場所</span>
-                  <p>{selectedEvent.location || '未設定'}</p>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>メモ</span>
-                  <p>{selectedEvent.notes || '未設定'}</p>
-                </div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>種類</span><p>{EVENT_TYPES.find((type) => type.id === selectedEvent.type)?.label || '予定'}</p></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>時間</span><p>{selectedEvent.start_time || '未設定'}</p></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>場所</span><p>{selectedEvent.location || '未設定'}</p></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>メモ</span><p>{selectedEvent.notes || '未設定'}</p></div>
               </div>
             </Card>
           )}
         </section>
 
-        {/* Add Event Form */}
         <section className={styles.addEventSection}>
           <h3>{isEditingEvent ? '🛠️ 予定を編集' : '✨ 予定を追加'}</h3>
           {!isAddingEvent && !isEditingEvent ? (
-            <Button
-              variant="primary"
-              onClick={() => setIsAddingEvent(true)}
-              className={styles.addButton}
-            >
-              + 予定を追加
-            </Button>
+            <Button variant="primary" onClick={() => setIsAddingEvent(true)} className={styles.addButton}>+ 予定を追加</Button>
           ) : (
             <Card className={styles.formCard}>
               <form onSubmit={isEditingEvent ? handleUpdateEvent : handleAddEvent} className={styles.form}>
@@ -431,12 +409,8 @@ export default function ScheduleEditor() {
                       <button
                         key={t.id}
                         type="button"
-                        className={`${styles.typeButton} ${
-                          formData.type === t.id ? styles.selected : ''
-                        }`}
-                        onClick={() =>
-                          setFormData({ ...formData, type: t.id })
-                        }
+                        className={`${styles.typeButton} ${formData.type === t.id ? styles.selected : ''}`}
+                        onClick={() => setFormData({ ...formData, type: t.id })}
                       >
                         {t.label}
                       </button>
@@ -446,79 +420,29 @@ export default function ScheduleEditor() {
 
                 <div className={styles.formGroup}>
                   <label>タイトル *</label>
-                  <input
-                    type="text"
-                    placeholder="例: 清水寺を訪問"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className={styles.input}
-                    required
-                  />
+                  <input type="text" placeholder="例: 清水寺を訪問" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className={styles.input} required />
                 </div>
 
                 <div className={styles.formGrid}>
                   <div className={styles.formGroup}>
                     <label>時間</label>
-                    <input
-                      type="time"
-                      value={formData.start_time}
-                      onChange={(e) =>
-                        setFormData({ ...formData, start_time: e.target.value })
-                      }
-                      className={styles.input}
-                    />
+                    <input type="time" value={formData.start_time} onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} className={styles.input} />
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>場所</label>
-                    <input
-                      type="text"
-                      placeholder="例: 清水区1-1"
-                      value={formData.location}
-                      onChange={(e) =>
-                        setFormData({ ...formData, location: e.target.value })
-                      }
-                      className={styles.input}
-                    />
+                    <input type="text" placeholder="例: 清水区1-1" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className={styles.input} />
                   </div>
                 </div>
 
                 <div className={styles.formGroup}>
                   <label>メモ</label>
-                  <textarea
-                    placeholder="詳細や注意点など"
-                    value={formData.notes}
-                    onChange={(e) =>
-                      setFormData({ ...formData, notes: e.target.value })
-                    }
-                    className={styles.textarea}
-                    rows={2}
-                  />
+                  <textarea placeholder="詳細や注意点など" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className={styles.textarea} rows={2} />
                 </div>
 
                 <div className={styles.formActions}>
-                  <Button type="submit" variant="primary">
-                    {isEditingEvent ? '更新する' : '追加する'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      setIsAddingEvent(false);
-                      setIsEditingEvent(false);
-                      setFormData({
-                        type: 'sightseeing',
-                        title: '',
-                        start_time: '',
-                        location: '',
-                        notes: '',
-                      });
-                    }}
-                  >
-                    キャンセル
-                  </Button>
+                  <Button type="submit" variant="primary">{isEditingEvent ? '更新する' : '追加する'}</Button>
+                  <Button type="button" variant="secondary" onClick={() => { setIsAddingEvent(false); setIsEditingEvent(false); setFormData(EMPTY_FORM); }}>キャンセル</Button>
                 </div>
               </form>
             </Card>

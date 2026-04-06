@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Button, Card } from '@/components';
+import { Button, Card, TripNav } from '@/components';
 import { Trip, Member } from '@/types';
 import styles from '@/styles/Members.module.css';
 
@@ -100,6 +100,8 @@ export default function MembersPage() {
         <h1>👥 メンバー管理</h1>
         <div />
       </div>
+
+      <TripNav tripId={typeof id === 'string' ? id : ''} />
 
       {/* Share Section */}
       <Card className={styles.shareCard}>

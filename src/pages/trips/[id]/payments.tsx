@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Button, Card } from '@/components';
+import { Button, Card, TripNav } from '@/components';
 import { Member, Payment } from '@/types';
+import { QUICK_PAYMENT_CATEGORIES } from '@/lib/tripUtils';
 import styles from '@/styles/Payments.module.css';
 
 const MAX_RECEIPT_SIZE_BYTES = 3 * 1024 * 1024;
@@ -61,7 +62,7 @@ export default function PaymentsPage() {
             ...prev,
             payer_id: fetchedMembers[0].id,
           }));
-          setSelectedMemberIds([fetchedMembers[0].id]);
+          setSelectedMemberIds(fetchedMembers.map((member: Member) => member.id));
         }
 
         const paymentsRes = await fetch(`/api/trips/${id}/payments`);
@@ -107,6 +108,10 @@ export default function PaymentsPage() {
 
   const handleSelectAllMembers = () => {
     setSelectedMemberIds(members.map((member) => member.id));
+  };
+
+  const handleSplitWithEveryone = () => {
+    handleSelectAllMembers();
   };
 
   const handleClearMemberSelection = () => {
@@ -161,8 +166,16 @@ export default function PaymentsPage() {
       }
 
       setPayments((current) => [...result.data, ...current]);
-      resetForm();
-      setIsAddingPayment(false);
+      const nextPayerId = formData.payer_id || members[0]?.id || '';
+      setReceiptFile(null);
+      setFormData({
+        payer_id: nextPayerId,
+        amount: '',
+        description: '',
+        payment_date: new Date().toISOString().split('T')[0],
+      });
+      setSelectedMemberIds(members.map((member) => member.id));
+      setIsAddingPayment(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add payment');
     }
@@ -335,6 +348,8 @@ export default function PaymentsPage() {
         <div />
       </div>
 
+      <TripNav tripId={typeof id === 'string' ? id : ''} />
+
       <Card className={styles.summaryCard}>
         <div className={styles.summaryContent}>
           <div>
@@ -356,6 +371,7 @@ export default function PaymentsPage() {
               variant="primary"
               onClick={() => {
                 resetForm();
+                setSelectedMemberIds(members.map((member) => member.id));
                 setIsAddingPayment(true);
               }}
               size="sm"
@@ -433,6 +449,9 @@ export default function PaymentsPage() {
               <div className={styles.formHeaderRow}>
                 <h3>{editingPaymentId ? '支払いを編集' : '支払いを追加'}</h3>
                 <div className={styles.inlineActions}>
+                  <Button type="button" variant="secondary" size="sm" onClick={handleSplitWithEveryone}>
+                    全員で割る
+                  </Button>
                   <Button type="button" variant="secondary" size="sm" onClick={handleSelectAllMembers}>
                     全員選択
                   </Button>
@@ -525,6 +544,18 @@ export default function PaymentsPage() {
                     }
                     className={styles.input}
                   />
+                  <div className={styles.quickCategoryRow}>
+                    {QUICK_PAYMENT_CATEGORIES.map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        className={styles.quickCategoryButton}
+                        onClick={() => setFormData({ ...formData, description: category })}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

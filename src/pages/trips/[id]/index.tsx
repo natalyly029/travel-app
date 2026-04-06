@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Button, Card } from '@/components';
+import { Button, Card, TripNav } from '@/components';
 import { Trip, Day, Event } from '@/types';
+import { formatDayDate, getPreferredDayId, isTodayDate } from '@/lib/tripUtils';
 import styles from '@/styles/TripDetail.module.css';
 
 const RECENT_TRIPS_STORAGE_KEY = 'travel-app-recent-trips';
@@ -109,6 +110,8 @@ export default function TripDetail() {
     : '読み込み中...';
   const totalEvents = events.length;
   const scheduledEvents = events.filter((event) => event.start_time).length;
+  const preferredDayId = getPreferredDayId(days);
+  const highlightedEventId = nextEvent?.day_id && isTodayDate(days.find((day) => day.id === nextEvent.day_id)?.date || '') ? nextEvent.id : '';
 
   const getDayPreview = (day: Day) => {
     const dayEvents = events
@@ -164,24 +167,7 @@ export default function TripDetail() {
         </div>
       </section>
 
-      {/* Tabs Navigation */}
-      <nav className={styles.tabs}>
-        <Link href={`/trips/${trip.id}/schedule`} className={styles.tab}>
-          📅 スケジュール
-        </Link>
-        <Link href={`/trips/${trip.id}/members`} className={styles.tab}>
-          👥 メンバー
-        </Link>
-        <Link href={`/trips/${trip.id}/payments`} className={styles.tab}>
-          💰 支払い
-        </Link>
-        <Link href={`/trips/${trip.id}/documents`} className={styles.tab}>
-          📎 資料
-        </Link>
-        <Link href={`/trips/${trip.id}/settlement`} className={styles.tab}>
-          🧾 清算
-        </Link>
-      </nav>
+      <TripNav tripId={trip.id} />
 
       {nextEvent && (
         <section className={styles.nextEventSection}>
@@ -237,17 +223,18 @@ export default function TripDetail() {
                 href={`/trips/${trip.id}/schedule?dayId=${day.id}`}
                 className={styles.dayCardLink}
               >
-                <Card className={styles.dayCard}>
+                <Card className={`${styles.dayCard} ${preferredDayId === day.id ? styles.dayCardToday : ''} ${highlightedEventId && events.some((event) => event.day_id === day.id && event.id === highlightedEventId) ? styles.dayCardFocus : ''}`}>
                   <div className={styles.dayHeader}>
                     <h3>Day {day.day_number}</h3>
+                    {isTodayDate(day.date) && <span className={styles.todayChip}>今日</span>}
                     <span className={styles.date}>
-                      {new Date(day.date).toLocaleDateString('ja-JP', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                      {formatDayDate(day.date)}
                     </span>
                   </div>
                   <p className={styles.dayLabel}>{preview.headline}</p>
+                  {highlightedEventId && events.some((event) => event.day_id === day.id && event.id === highlightedEventId) && (
+                    <span className={styles.dayFocusLabel}>次に近い予定を含む</span>
+                  )}
                   <span className={styles.dayMeta}>{preview.countLabel}</span>
                 </Card>
               </Link>
