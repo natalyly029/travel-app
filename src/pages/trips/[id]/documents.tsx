@@ -149,47 +149,60 @@ export default function DocumentsPage() {
         {error && <div className={styles.errorMessage}>{error}</div>}
 
         {isAdding && (
-          <Card className={styles.formCard}>
-            <form onSubmit={handleUpload} className={styles.form}>
-              <div className={styles.formGroup}>
-                <label>タイトル *</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} className={styles.input} placeholder="例: e-ticket / ホテル予約表" required />
-              </div>
-              <div className={styles.formGroup}>
-                <label>ファイル *</label>
-                <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} className={styles.input} required />
-                <p className={styles.hint}>PDF / PNG / JPG / WEBP、10MB以下</p>
-              </div>
-              <div className={styles.formActions}>
-                <Button type="submit" variant="primary">アップロード</Button>
-                <Button type="button" variant="secondary" onClick={() => { setIsAdding(false); setFile(null); setTitle(''); }}>キャンセル</Button>
-              </div>
-            </form>
-          </Card>
-        )}
-
-        {documents.length === 0 ? (
-          <p className={styles.empty}>まだ資料がありません</p>
-        ) : (
-          <div className={styles.documentsList}>
-            {documents.map((document) => (
-              <Card key={document.id} className={styles.documentCard}>
-                <div className={styles.documentMain}>
-                  <div>
-                    <h3>{document.title}</h3>
-                    <p className={styles.documentMeta}>{document.file_name}</p>
-                  </div>
-                  <div className={styles.actions}>
-                    {document.file_url && (
-                      <a href={document.file_url} target="_blank" rel="noreferrer" className={styles.openLink}>開く</a>
-                    )}
-                    <Button variant="secondary" size="sm" onClick={() => handleDelete(document.id)}>削除</Button>
-                  </div>
+          <div className={styles.uploadSection}>
+            <div className={styles.sectionHeader}>
+              <h3>アップロード資料</h3>
+              <p>旅に必要な資料を追加します</p>
+            </div>
+            <Card className={styles.formCard}>
+              <form onSubmit={handleUpload} className={styles.form}>
+                <div className={styles.formGroup}>
+                  <label>タイトル *</label>
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} className={styles.input} placeholder="例: e-ticket / ホテル予約表" required />
                 </div>
-              </Card>
-            ))}
+                <div className={styles.formGroup}>
+                  <label>ファイル *</label>
+                  <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} className={styles.input} required />
+                  <p className={styles.hint}>PDF / PNG / JPG / WEBP、10MB以下</p>
+                </div>
+                <div className={styles.formActions}>
+                  <Button type="submit" variant="primary">アップロード</Button>
+                  <Button type="button" variant="secondary" onClick={() => { setIsAdding(false); setFile(null); setTitle(''); }}>キャンセル</Button>
+                </div>
+              </form>
+            </Card>
           </div>
         )}
+
+        <div className={styles.listSection}>
+          <div className={styles.sectionHeader}>
+            <h3>アップロード済み資料</h3>
+            <p>{documents.length}件</p>
+          </div>
+
+          {documents.length === 0 ? (
+            <p className={styles.empty}>まだ資料がありません</p>
+          ) : (
+            <div className={styles.documentsList}>
+              {documents.map((document) => (
+                <Card key={document.id} className={styles.documentCard}>
+                  <div className={styles.documentMain}>
+                    <div>
+                      <h3>{document.title}</h3>
+                      <p className={styles.documentMeta}>{document.file_name}</p>
+                    </div>
+                    <div className={styles.actions}>
+                      {document.file_url && (
+                        <a href={document.file_url} target="_blank" rel="noreferrer" className={styles.openLink}>開く</a>
+                      )}
+                      <Button variant="secondary" size="sm" onClick={() => handleDelete(document.id)}>削除</Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );
