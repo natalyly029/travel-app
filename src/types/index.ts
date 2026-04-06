@@ -119,3 +119,16 @@ export interface TripDocument {
   file_url?: string | null;
   created_at: string;
 }
+
+export interface TripSpot {
+  id: string;
+  trip_id: string;
+  name: string;
+  area?: string | null;
+  notes?: string | null;
+  url?: string | null;
+  priority?: 'low' | 'medium' | 'high' | null;
+  status?: 'interested' | 'considering' | 'visited' | 'skipped' | null;
+  created_at: string;
+  updated_at?: string;
+}

@@ -1,0 +1,171 @@
+.container {
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 32px);
+  background: linear-gradient(135deg, #a7f3d0 0%, #fef08a 100%);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 2rem;
+}
+
+.header,
+.summaryCard,
+.listSection,
+.formCard,
+.errorMessage {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: white;
+  padding: 16px 18px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
+}
+
+.summaryCard,
+.formCard,
+.spotCard {
+  padding: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  color: var(--color-gray-dark);
+  font-weight: 700;
+}
+
+.summaryMeta,
+.spotMeta,
+.notes,
+.link {
+  font-size: 0.86rem;
+  color: var(--color-gray-dark);
+}
+
+.errorMessage {
+  padding: 14px;
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: 14px;
+  color: #991b1b;
+}
+
+.form,
+.spotList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input,
+.textarea {
+  padding: 10px 12px;
+  border: 2px solid var(--color-gray-medium);
+  border-radius: 12px;
+}
+
+.formActions,
+.actionGroup,
+.quickActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spotTopRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.spotTopRow h3 {
+  margin: 8px 0 4px;
+}
+
+.badgeRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.priorityBadge,
+.statusBadge,
+.statusButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+}
+
+.priorityBadge {
+  background: rgba(251, 191, 36, 0.18);
+  color: #92400e;
+}
+
+.statusBadge {
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--color-purple);
+}
+
+.statusButton {
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  background: rgba(255,255,255,0.9);
+  color: var(--color-gray-dark);
+}
+
+.statusButtonActive {
+  background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  color: white;
+  border-color: transparent;
+}
+
+.link {
+  display: inline-flex;
+  margin-top: 8px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--color-gray-dark);
+  padding: 32px 12px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header,
+  .spotTopRow,
+  .formGrid,
+  .formActions,
+  .actionGroup {
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+}

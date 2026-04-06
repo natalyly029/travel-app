@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: '👥 メンバー', href: (tripId: string) => `/trips/${tripId}/members` },
   { label: '💰 支払い', href: (tripId: string) => `/trips/${tripId}/payments` },
   { label: '📎 資料', href: (tripId: string) => `/trips/${tripId}/documents` },
+  { label: '📍 スポット', href: (tripId: string) => `/trips/${tripId}/spots` },
   { label: '🧾 清算', href: (tripId: string) => `/trips/${tripId}/settlement` },
 ];
 
