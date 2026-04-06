@@ -224,25 +224,6 @@ export default function PaymentsPage() {
     }
   };
 
-  const handleToggleAllocationSettled = async (paymentId: string, memberId: string, isSettled: boolean) => {
-    try {
-      const response = await fetch(`/api/trips/${id}/payments`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, memberId, isSettled }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to update settlement status');
-
-      setPayments((current) =>
-        current.map((payment) => (payment.id === paymentId ? result.data[0] : payment))
-      );
-    } catch (err) {
-      alert('清算ステータスの更新に失敗しました');
-    }
-  };
-
   const handleDeletePayment = async (paymentId: string) => {
     if (!confirm('この支払いを削除しますか？')) return;
 
@@ -625,25 +606,11 @@ export default function PaymentsPage() {
                   </div>
                   <div className={styles.paymentCell}>
                     <span className={styles.cellLabel}>対象</span>
-                    <div className={styles.allocationList}>
-                      {payment.allocation_statuses && payment.allocation_statuses.length > 0 ? (
-                        payment.allocation_statuses.map((allocation) => (
-                          <label key={`${payment.id}-${allocation.member_id}`} className={styles.allocationItem}>
-                            <input
-                              type="checkbox"
-                              checked={allocation.is_settled}
-                              onChange={(e) => handleToggleAllocationSettled(payment.id, allocation.member_id, e.target.checked)}
-                            />
-                            <span>
-                              {getMemberName(allocation.member_id)}
-                              {allocation.is_settled ? '（清算済み）' : '（未清算）'}
-                            </span>
-                          </label>
-                        ))
-                      ) : (
-                        <p className={styles.billedMembers}>—</p>
-                      )}
-                    </div>
+                    <p className={styles.billedMembers}>
+                      {payment.allocated_member_ids && payment.allocated_member_ids.length > 0
+                        ? `${payment.allocated_member_ids.length}人: ${payment.allocated_member_ids.map(getMemberName).join(' / ')}`
+                        : '—'}
+                    </p>
                   </div>
                   <div className={styles.paymentCell}>
                     <span className={styles.cellLabel}>金額</span>

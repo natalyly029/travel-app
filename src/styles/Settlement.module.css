@@ -39,6 +39,28 @@
   color: var(--color-purple);
 }
 
+.tabBar {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.tabButton {
+  min-height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.82);
+  font-weight: 700;
+  color: var(--color-gray-dark);
+}
+
+.tabButtonActive {
+  background: var(--color-purple);
+  color: white;
+}
+
 .statusCard {
   max-width: 960px;
   margin: 0 auto 16px;
@@ -95,10 +117,47 @@
 }
 
 .settlementsSection,
-.balancesSection {
+.balancesSection,
+.individualSection {
   max-width: 1120px;
   margin: 0 auto 16px;
   animation: fadeIn 600ms ease-out;
+}
+
+.individualList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.individualCard {
+  padding: 14px;
+}
+
+.individualHeader h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.individualMeta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-gray-dark);
+}
+
+.individualAllocations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.individualAllocationItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--color-gray-dark);
 }
 
 .settlementsList,
