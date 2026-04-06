@@ -538,7 +538,7 @@ export default function PaymentsPage() {
                     className={styles.input}
                   />
                   <p className={styles.fileHint}>
-                    PDFのみ添付できます。無料枠運用のため3MB以下に制限しています。
+                    PDFのみ添付できます。3MB以下にしてください。
                   </p>
                   {receiptFile && (
                     <p className={styles.fileMeta}>
