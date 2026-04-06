@@ -36,6 +36,10 @@ export default async function handler(
     return handleDeletePayment(id, req, res);
   }
 
+  if (req.method === 'PUT') {
+    return handleSetAllocationSettled(id, req, res);
+  }
+
   res.status(405).json({ error: 'Method not allowed' });
 }
 
@@ -45,7 +49,7 @@ async function attachAllocations(payments: Payment[]) {
   const paymentIds = payments.map((payment) => payment.id);
   const { data: allocations, error } = await supabase
     .from('payment_allocations')
-    .select('payment_id, member_id')
+    .select('payment_id, member_id, is_settled, settled_at')
     .in('payment_id', paymentIds);
 
   if (error) {
@@ -53,15 +57,26 @@ async function attachAllocations(payments: Payment[]) {
   }
 
   const allocationMap = new Map<string, string[]>();
+  const allocationStatusMap = new Map<string, { member_id: string; is_settled: boolean; settled_at?: string | null }[]>();
+
   (allocations || []).forEach((allocation) => {
     const current = allocationMap.get(allocation.payment_id) || [];
     current.push(allocation.member_id);
     allocationMap.set(allocation.payment_id, current);
+
+    const statusCurrent = allocationStatusMap.get(allocation.payment_id) || [];
+    statusCurrent.push({
+      member_id: allocation.member_id,
+      is_settled: Boolean(allocation.is_settled),
+      settled_at: allocation.settled_at || null,
+    });
+    allocationStatusMap.set(allocation.payment_id, statusCurrent);
   });
 
   return payments.map((payment) => ({
     ...payment,
     allocated_member_ids: allocationMap.get(payment.id) || [],
+    allocation_statuses: allocationStatusMap.get(payment.id) || [],
   }));
 }
 
@@ -236,6 +251,8 @@ async function handleCreatePayment(
     const allocationRows = normalizedAllocatedMemberIds.map((memberId) => ({
       payment_id: data.id,
       member_id: memberId,
+      is_settled: false,
+      settled_at: null,
     }));
 
     const { error: allocationError } = await supabase
@@ -306,6 +323,8 @@ async function handleUpdatePayment(
     const allocationRows = normalizedAllocatedMemberIds.map((memberId) => ({
       payment_id: paymentId,
       member_id: memberId,
+      is_settled: false,
+      settled_at: null,
     }));
 
     const { error: insertAllocationsError } = await supabase
@@ -321,6 +340,39 @@ async function handleUpdatePayment(
   } catch (err) {
     console.error('Update payment error:', err);
     res.status(500).json({ error: 'Failed to update payment' });
+  }
+}
+
+async function handleSetAllocationSettled(
+  _tripId: string,
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
+  const { paymentId, memberId, isSettled } = req.body;
+
+  if (!paymentId || !memberId || typeof isSettled !== 'boolean') {
+    return res.status(400).json({ error: 'Missing required fields: paymentId, memberId, isSettled' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('payment_allocations')
+      .update({
+        is_settled: isSettled,
+        settled_at: isSettled ? new Date().toISOString() : null,
+      })
+      .eq('payment_id', paymentId)
+      .eq('member_id', memberId);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const enriched = await fetchAndEnrichPaymentsByIds([paymentId]);
+    return res.status(200).json({ data: enriched });
+  } catch (err) {
+    console.error('Set allocation settled error:', err);
+    return res.status(500).json({ error: 'Failed to update allocation status' });
   }
 }
 

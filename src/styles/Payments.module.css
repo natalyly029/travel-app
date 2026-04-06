@@ -368,6 +368,21 @@
   font-weight: 600;
 }
 
+.allocationList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.allocationItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--color-gray-dark);
+  line-height: 1.4;
+}
+
 .billedMembers {
   margin-top: 6px;
   font-size: 0.8rem;

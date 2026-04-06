@@ -14,6 +14,8 @@ type ResponseData = {
 type PaymentAllocationRow = {
   payment_id: string;
   member_id: string;
+  is_settled?: boolean;
+  settled_at?: string | null;
 };
 
 export default async function handler(
@@ -60,7 +62,7 @@ async function handleCalculateSettlement(
     if (paymentIds.length > 0) {
       const { data: allocationData, error: allocationError } = await supabase
         .from('payment_allocations')
-        .select('payment_id, member_id')
+        .select('payment_id, member_id, is_settled, settled_at')
         .in('payment_id', paymentIds);
 
       if (allocationError) {
@@ -97,10 +99,10 @@ function calculateSettlement(
     fairShareByMember[member.id] = 0;
   });
 
-  const allocationMap = new Map<string, string[]>();
+  const allocationMap = new Map<string, PaymentAllocationRow[]>();
   allocations.forEach((allocation) => {
     const current = allocationMap.get(allocation.payment_id) || [];
-    current.push(allocation.member_id);
+    current.push(allocation);
     allocationMap.set(allocation.payment_id, current);
   });
 
@@ -109,8 +111,8 @@ function calculateSettlement(
     paidByMember[payment.payer_id] = (paidByMember[payment.payer_id] || 0) + amount;
     totalAmount += amount;
 
-    const billedMembers = allocationMap.get(payment.id) || [];
-    const shareTargets = billedMembers.length > 0 ? billedMembers : members.map((member) => member.id);
+    const billedMembers = (allocationMap.get(payment.id) || []).filter((allocation) => !allocation.is_settled);
+    const shareTargets = billedMembers.length > 0 ? billedMembers.map((allocation) => allocation.member_id) : members.map((member) => member.id);
     const sharePerMember = shareTargets.length > 0 ? amount / shareTargets.length : 0;
 
     shareTargets.forEach((memberId) => {

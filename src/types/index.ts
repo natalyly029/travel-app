@@ -45,6 +45,12 @@ export interface Member {
   created_at: string;
 }
 
+export interface PaymentAllocationStatus {
+  member_id: string;
+  is_settled: boolean;
+  settled_at?: string | null;
+}
+
 export interface Payment {
   id: string;
   trip_id: string;
@@ -60,6 +66,7 @@ export interface Payment {
   receipt_mime_type?: string | null;
   receipt_url?: string | null;
   allocated_member_ids?: string[];
+  allocation_statuses?: PaymentAllocationStatus[];
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +75,8 @@ export interface PaymentAllocation {
   id: string;
   payment_id: string;
   member_id: string;
+  is_settled?: boolean;
+  settled_at?: string | null;
   created_at: string;
 }
 
