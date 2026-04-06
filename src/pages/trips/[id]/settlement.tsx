@@ -99,15 +99,22 @@ export default function SettlementPage() {
     }
   };
 
-  const handleMarkBulkSettlementComplete = async (fromMemberId: string) => {
+  const handleMarkBulkSettlementComplete = async (fromMemberId: string, toMemberId: string) => {
     const targetAllocations = payments.flatMap((payment) =>
-      (payment.allocation_statuses || [])
-        .filter((allocation) => allocation.member_id === fromMemberId && !allocation.is_settled)
-        .map((allocation) => ({ paymentId: payment.id, memberId: allocation.member_id }))
+      payment.payer_id !== toMemberId
+        ? []
+        : (payment.allocation_statuses || [])
+            .filter((allocation) => allocation.member_id === fromMemberId && !allocation.is_settled)
+            .map((allocation) => ({ paymentId: payment.id, memberId: allocation.member_id }))
     );
 
+    const targetSummary = payments
+      .filter((payment) => payment.payer_id === toMemberId)
+      .flatMap((payment) => (payment.allocation_statuses || []).filter((allocation) => allocation.member_id === fromMemberId));
+
     if (targetAllocations.length === 0) {
-      alert('このメンバーに未清算の項目はありません');
+      const hasAnyRelation = targetSummary.length > 0;
+      alert(hasAnyRelation ? 'このメンバー間の未清算項目はありません' : 'このメンバー間に対応する個別清算項目がありません');
       return;
     }
 
@@ -228,7 +235,7 @@ export default function SettlementPage() {
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => handleMarkBulkSettlementComplete(settlement.from_member_id)}
+                        onClick={() => handleMarkBulkSettlementComplete(settlement.from_member_id, settlement.to_member_id)}
                       >
                         清算済みにする
                       </Button>
