@@ -68,6 +68,16 @@ export default function SettlementPage() {
     fetchSettlement();
   }, [id]);
 
+  const refreshSettlementData = async () => {
+    const settlementResponse = await fetch(`/api/trips/${id}/settlement`);
+    const settlementResult = await settlementResponse.json();
+    if (settlementResponse.ok) {
+      setSettlements(settlementResult.data?.settlements || []);
+      setMemberBalances(settlementResult.data?.memberBalances || {});
+      setTotalAmount(settlementResult.data?.totalAmount || 0);
+    }
+  };
+
   const handleToggleAllocationSettled = async (paymentId: string, memberId: string, isSettled: boolean) => {
     try {
       const response = await fetch(`/api/trips/${id}/payments`, {
@@ -83,15 +93,43 @@ export default function SettlementPage() {
         current.map((payment) => (payment.id === paymentId ? result.data[0] : payment))
       );
 
-      const settlementResponse = await fetch(`/api/trips/${id}/settlement`);
-      const settlementResult = await settlementResponse.json();
-      if (settlementResponse.ok) {
-        setSettlements(settlementResult.data?.settlements || []);
-        setMemberBalances(settlementResult.data?.memberBalances || {});
-        setTotalAmount(settlementResult.data?.totalAmount || 0);
-      }
+      await refreshSettlementData();
     } catch (err) {
       alert('清算ステータスの更新に失敗しました');
+    }
+  };
+
+  const handleMarkBulkSettlementComplete = async (fromMemberId: string) => {
+    const targetAllocations = payments.flatMap((payment) =>
+      (payment.allocation_statuses || [])
+        .filter((allocation) => allocation.member_id === fromMemberId && !allocation.is_settled)
+        .map((allocation) => ({ paymentId: payment.id, memberId: allocation.member_id }))
+    );
+
+    if (targetAllocations.length === 0) {
+      alert('このメンバーに未清算の項目はありません');
+      return;
+    }
+
+    try {
+      for (const allocation of targetAllocations) {
+        const response = await fetch(`/api/trips/${id}/payments`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentId: allocation.paymentId,
+            memberId: allocation.memberId,
+            isSettled: true,
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Failed to mark settlement complete');
+        setPayments((current) => current.map((payment) => (payment.id === allocation.paymentId ? result.data[0] : payment)));
+      }
+
+      await refreshSettlementData();
+    } catch (err) {
+      alert('一括清算ステータスの更新に失敗しました');
     }
   };
 
@@ -186,6 +224,13 @@ export default function SettlementPage() {
                         }}
                       >
                         📋 コピー
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleMarkBulkSettlementComplete(settlement.from_member_id)}
+                      >
+                        清算済みにする
                       </Button>
                     </div>
                   </div>
